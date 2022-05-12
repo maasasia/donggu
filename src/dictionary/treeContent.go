@@ -1,6 +1,7 @@
 package dictionary
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -75,4 +76,18 @@ func (c *ContentNode) validateWalk(validator *contentValidator) (err *multierror
 		}
 	}
 	return
+}
+
+func (c *ContentNode) Print() {
+	c.printWalk("")
+}
+
+func (c *ContentNode) printWalk(indent string) {
+	fmt.Printf("%s[%s]\n", indent, c.JoinedKey())
+	for entry, entryContent := range c.Entries {
+		fmt.Printf("%s  %s: %+v\n", indent, entry, entryContent.String())
+	}
+	for _, child := range c.Children {
+		child.printWalk(indent + "  ")
+	}
 }
