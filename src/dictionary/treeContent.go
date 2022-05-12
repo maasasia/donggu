@@ -51,8 +51,8 @@ func (c *ContentNode) toFlattenedWalk(flattened *FlattenedContent) {
 	}
 }
 
-func (c *ContentNode) Validate(metadata Metadata) *multierror.Error {
-	validator := newContentValidator(metadata)
+func (c *ContentNode) Validate(metadata Metadata, options ContentValidationOptions) *multierror.Error {
+	validator := newContentValidator(metadata, options)
 	return c.validateWalk(&validator)
 }
 

@@ -12,15 +12,21 @@ import (
 // This is used to cache values derived from the metadata.
 type contentValidator struct {
 	metadata          Metadata
+	options           ContentValidationOptions
 	supportedLangSet  map[string]struct{}
 	requiredLangSet   map[string]struct{}
 	templateRegex     *regexp.Regexp
 	templateItemRegex *regexp.Regexp
 }
 
-func newContentValidator(m Metadata) contentValidator {
+type ContentValidationOptions struct {
+	SkipLangSupportCheck bool
+}
+
+func newContentValidator(m Metadata, options ContentValidationOptions) contentValidator {
 	validator := contentValidator{
 		metadata:          m,
+		options:           options,
 		supportedLangSet:  map[string]struct{}{},
 		requiredLangSet:   map[string]struct{}{},
 		templateRegex:     regexp.MustCompile("#{(.*?)}"),
@@ -39,10 +45,12 @@ func (c contentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 	templateKeys = map[string]TemplateKeyFormat{}
 	templateKeyOwner := map[string]string{}
 
-	for requiredLang := range c.requiredLangSet {
-		if _, ok := entry[requiredLang]; !ok {
-			err = errors.Errorf("'%s' is required but does not exist", requiredLang)
-			return
+	if !c.options.SkipLangSupportCheck {
+		for requiredLang := range c.requiredLangSet {
+			if _, ok := entry[requiredLang]; !ok {
+				err = errors.Errorf("'%s' is required but does not exist", requiredLang)
+				return
+			}
 		}
 	}
 	for key, value := range entry {
@@ -51,7 +59,7 @@ func (c contentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 			return
 		}
 		_, isSupportedLang := c.supportedLangSet[key]
-		if !(isSupportedLang || key == "context") {
+		if !c.options.SkipLangSupportCheck && !(isSupportedLang || key == "context") {
 			err = errors.Errorf("language '%s' is not in supported languages", key)
 			return
 		}

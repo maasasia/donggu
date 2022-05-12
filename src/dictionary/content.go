@@ -10,7 +10,7 @@ import (
 type ContentRepresentation interface {
 	ToFlattened() *FlattenedContent
 	ToTree() *ContentNode
-	Validate(metadata Metadata) *multierror.Error
+	Validate(metadata Metadata, options ContentValidationOptions) *multierror.Error
 }
 
 type Entry map[string]string
