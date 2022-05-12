@@ -41,7 +41,7 @@ func (c contentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 
 	for requiredLang := range c.requiredLangSet {
 		if _, ok := entry[requiredLang]; !ok {
-			err = errors.Errorf("'%s' is required but does not exist")
+			err = errors.Errorf("'%s' is required but does not exist", requiredLang)
 			return
 		}
 	}
@@ -60,14 +60,14 @@ func (c contentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 		}
 		langTemplateKeys, contentErr := c.ParseFormatString(value)
 		if contentErr != nil {
-			err = errors.Wrapf(err, "invalid template for '%s'", key)
+			err = errors.Wrapf(contentErr, "invalid template for '%s'", key)
 			return
 		}
 		for templateKey, format := range langTemplateKeys {
 			if existingFormat, exists := templateKeys[templateKey]; exists {
 				if !format.Compatible(existingFormat) {
 					err = errors.Errorf(
-						"incompatible constraints in key '%s': '%s'(from %s) vs '%s'(from %s)",
+						"incompatible constraints in key '%s': '%s' from %s vs. '%s' from %s",
 						templateKey, existingFormat, templateKeyOwner[templateKey], format, key,
 					)
 				}
@@ -85,7 +85,7 @@ func (c contentValidator) ParseFormatString(format string) (map[string]TemplateK
 	templates := map[string]TemplateKeyFormat{}
 	for _, template := range c.templateRegex.FindAllString(format, -1) {
 		itemMatch := c.templateItemRegex.FindAllStringSubmatch(template, -1)
-		if len(itemMatch) != 0 {
+		if len(itemMatch) == 0 {
 			return map[string]TemplateKeyFormat{}, errors.Errorf("invalid template format '%s'", template)
 		}
 		groups := itemMatch[0]
