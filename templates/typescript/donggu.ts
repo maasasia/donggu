@@ -1,12 +1,9 @@
-import { DATA, DictionaryImpl } from "./generated/dictionary";
-import { Language } from "./generated/metadata";
+import { DATA, Language, MDictImpl, RequiredLanguage } from "./generated/dictionary";
 
-export interface InternalDonggu {
-    resolve<O>(key: keyof typeof DATA, options: O, language?: Language): string;
-}
+export type FallbackOrderFn = (wanted?: Language) => [...Language[], RequiredLanguage];
 
-export class Donggu extends DictionaryImpl {
-    constructor() {
+export class Donggu extends MDictImpl {
+    constructor(private readonly getFallbackOrder: FallbackOrderFn) {
         const cb = (key: keyof typeof DATA, options: unknown, language?: Language) => {
             return this.resolve(key, options, language);
         };
@@ -14,8 +11,15 @@ export class Donggu extends DictionaryImpl {
     }
 
     public resolve<O>(key: keyof typeof DATA, options: O, language?: Language): string {
-        return key;
+        if (language && (language in DATA[key])) {
+            return (DATA[key] as any)[language](options);
+        }
+        const fallbackOrder = this.getFallbackOrder(language);
+        for (let i=0; i<fallbackOrder.length-1; i++) {
+            if (fallbackOrder[i] in DATA[key]) {
+                return (DATA[key] as any)[fallbackOrder[i]](options);
+            }
+        }
+        return (DATA[key] as any)[fallbackOrder[fallbackOrder.length - 1]](options);
     }
 }
-
-console.log(new Donggu().screens.login.title());

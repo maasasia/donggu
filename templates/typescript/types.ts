@@ -1,5 +1,4 @@
-import { ScreensPopupBanMessageArgs } from "./generated/dictionary";
-import { Language } from "./generated/metadata";
+import { Language } from "./generated/dictionary";
 
 export type DictionaryNFnItem = (language?: Language) => string;
 export type DictionaryFnItem<Args> = ((args: Args, language?: Language) => string);

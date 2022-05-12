@@ -172,11 +172,12 @@ func (t *TypescriptContentBuilder) Build(metadata dictionary.Metadata, w io.Writ
 		`import { Formatter } from "../util";`,
 		`type ResolverFunc = (key: keyof typeof DATA, options: unknown, language?: Language) => string;`,
 		"",
+		fmt.Sprintf("export type RequiredLanguage = '%s';", strings.Join(metadata.RequiredLanguages, "' | '")),
 		fmt.Sprintf("export type Language = '%s';", strings.Join(metadata.SupportedLanguages, "' | '")),
 		"",
 	)
 
-	builder.AppendLines("const DATA = {")
+	builder.AppendLines("export const DATA = {")
 	builder.IndentedBlock(t.dataBuilder)
 	builder.AppendLines("};", "")
 	builder.AppendBlock(t.argTypeBuilder)
