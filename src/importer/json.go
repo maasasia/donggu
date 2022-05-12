@@ -14,7 +14,7 @@ type jsonMetadataType map[string][]string
 
 type JsonDictionaryImporter struct{}
 
-func (j JsonDictionaryImporter) ImportContent(filePath string) (dictionary.ContentRepresentation, error) {
+func (j JsonDictionaryImporter) ImportContent(filePath string, _ dictionary.Metadata) (dictionary.ContentRepresentation, error) {
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0)
 	if err != nil {
 		return &dictionary.FlattenedContent{}, errors.Wrap(err, "failed to open file")

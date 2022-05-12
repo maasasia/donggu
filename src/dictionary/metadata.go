@@ -10,6 +10,22 @@ type Metadata struct {
 	SupportedLanguages []string
 }
 
+func (m Metadata) SupportedLanguageSet() map[string]struct{} {
+	supportedLangSet := map[string]struct{}{}
+	for _, lang := range m.SupportedLanguages {
+		supportedLangSet[lang] = struct{}{}
+	}
+	return supportedLangSet
+}
+
+func (m Metadata) RequiredLanguageSet() map[string]struct{} {
+	requiredLangSet := map[string]struct{}{}
+	for _, lang := range m.RequiredLanguages {
+		requiredLangSet[lang] = struct{}{}
+	}
+	return requiredLangSet
+}
+
 func (m Metadata) Validate() (err *multierror.Error) {
 	supportedLangSet := map[string]struct{}{}
 	requiredLangSet := map[string]struct{}{}

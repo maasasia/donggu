@@ -8,7 +8,7 @@ type ResolveProjectResult struct {
 }
 
 type DictionaryImporter interface {
-	ImportContent(filePath string) (dictionary.ContentRepresentation, error)
+	ImportContent(filePath string, metadata dictionary.Metadata) (dictionary.ContentRepresentation, error)
 	ImportMetadata(filePath string) (dictionary.Metadata, error)
 	ResolveProject(projectPath string) (ResolveProjectResult, error)
 }
