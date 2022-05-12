@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"golang.org/x/text/language"
 )
 
 // contentEntryValidator is used to validate content entries with a given metadata.
@@ -23,7 +24,7 @@ func newContentValidator(m Metadata) contentValidator {
 		supportedLangSet:  map[string]struct{}{},
 		requiredLangSet:   map[string]struct{}{},
 		templateRegex:     regexp.MustCompile("#{(.*?)}"),
-		templateItemRegex: regexp.MustCompile("#{([A-Z0-9_]+)(?:\\|(string|int|float|bool))?}"),
+		templateItemRegex: regexp.MustCompile(`#{([A-Z0-9_]+)(?:\|(string|int|float|bool))?}`),
 	}
 	for _, lang := range m.RequiredLanguages {
 		validator.requiredLangSet[lang] = struct{}{}
@@ -38,6 +39,12 @@ func (c contentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 	templateKeys = map[string]TemplateKeyFormat{}
 	templateKeyOwner := map[string]string{}
 
+	for requiredLang := range c.requiredLangSet {
+		if _, ok := entry[requiredLang]; !ok {
+			err = errors.Errorf("'%s' is required but does not exist")
+			return
+		}
+	}
 	for key, value := range entry {
 		if strings.ToLower(key) != key {
 			err = errors.Errorf("key '%s' should be lowercase", key)
@@ -122,4 +129,9 @@ func ValidateKeyPart(keyPart string) error {
 	} else {
 		return errors.Errorf("invalid key part '%s'", keyPart)
 	}
+}
+
+func IsValidLanguageKey(lang string) bool {
+	_, err := language.Parse(lang)
+	return err == nil
 }
