@@ -42,7 +42,7 @@ func (f *FlattenedContent) ToTree() *ContentNode {
 }
 
 func (f FlattenedContent) Validate(metadata Metadata, options ContentValidationOptions) (err *multierror.Error) {
-	validator := newContentValidator(metadata, options)
+	validator := NewContentValidator(metadata, options)
 	for key, entry := range f {
 		if keyErr := ValidateJoinedKey(key); keyErr != nil {
 			err = multierror.Append(err, errors.Wrapf(keyErr, "invalid content '%s'", key))

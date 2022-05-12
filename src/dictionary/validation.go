@@ -10,7 +10,7 @@ import (
 
 // contentEntryValidator is used to validate content entries with a given metadata.
 // This is used to cache values derived from the metadata.
-type contentValidator struct {
+type ContentValidator struct {
 	metadata          Metadata
 	options           ContentValidationOptions
 	supportedLangSet  map[string]struct{}
@@ -23,8 +23,8 @@ type ContentValidationOptions struct {
 	SkipLangSupportCheck bool
 }
 
-func newContentValidator(m Metadata, options ContentValidationOptions) contentValidator {
-	validator := contentValidator{
+func NewContentValidator(m Metadata, options ContentValidationOptions) ContentValidator {
+	validator := ContentValidator{
 		metadata:          m,
 		options:           options,
 		supportedLangSet:  map[string]struct{}{},
@@ -41,7 +41,7 @@ func newContentValidator(m Metadata, options ContentValidationOptions) contentVa
 	return validator
 }
 
-func (c contentValidator) Validate(entry Entry) (templateKeys map[string]TemplateKeyFormat, err error) {
+func (c ContentValidator) Validate(entry Entry) (templateKeys map[string]TemplateKeyFormat, err error) {
 	templateKeys = map[string]TemplateKeyFormat{}
 	templateKeyOwner := map[string]string{}
 
@@ -89,7 +89,7 @@ func (c contentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 	return
 }
 
-func (c contentValidator) ParseFormatString(format string) (map[string]TemplateKeyFormat, error) {
+func (c ContentValidator) ParseFormatString(format string) (map[string]TemplateKeyFormat, error) {
 	templates := map[string]TemplateKeyFormat{}
 	for _, template := range c.templateRegex.FindAllString(format, -1) {
 		itemMatch := c.templateItemRegex.FindAllStringSubmatch(template, -1)
@@ -131,7 +131,7 @@ func ValidateKeySlice(key []string) error {
 }
 
 func ValidateKeyPart(keyPart string) error {
-	matched, _ := regexp.MatchString("^[a-zA-Z][0-9a-zA-Z_\\-]*$", keyPart)
+	matched, _ := regexp.MatchString("^[a-z][0-9a-z_]*$", keyPart)
 	if matched {
 		return nil
 	} else {

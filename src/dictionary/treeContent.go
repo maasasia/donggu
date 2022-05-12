@@ -56,11 +56,11 @@ func (c *ContentNode) toFlattenedWalk(flattened *FlattenedContent) {
 }
 
 func (c *ContentNode) Validate(metadata Metadata, options ContentValidationOptions) *multierror.Error {
-	validator := newContentValidator(metadata, options)
+	validator := NewContentValidator(metadata, options)
 	return c.validateWalk(&validator)
 }
 
-func (c *ContentNode) validateWalk(validator *contentValidator) (err *multierror.Error) {
+func (c *ContentNode) validateWalk(validator *ContentValidator) (err *multierror.Error) {
 	joinedKey := c.JoinedKey()
 	for key, entry := range c.Entries {
 		entryKey := key
