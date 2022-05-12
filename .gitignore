@@ -95,3 +95,4 @@ Temporary Items
 # .pnp.*
 
 # End of https://www.toptal.com/developers/gitignore/api/go,yarn,linux,macos
+src/**/*.json
