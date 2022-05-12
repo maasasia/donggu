@@ -31,6 +31,10 @@ func (c *ContentNode) ToTree() *ContentNode {
 	return c
 }
 
+func (c *ContentNode) ToNewFlattened() *FlattenedContent {
+	return c.ToFlattened()
+}
+
 func (c *ContentNode) ToFlattened() *FlattenedContent {
 	flattened := make(FlattenedContent, 0)
 	c.toFlattenedWalk(&flattened)

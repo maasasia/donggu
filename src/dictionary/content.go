@@ -8,7 +8,11 @@ import (
 )
 
 type ContentRepresentation interface {
+	// ToFlattened returns the corresponding flattened ContentRepresentation.
 	ToFlattened() *FlattenedContent
+	// ToNewFlattened is same as ToFlattened, but ensures that a new copy is made.
+	ToNewFlattened() *FlattenedContent
+	// ToFlattened returns the corresponding tree ContentRepresentation.
 	ToTree() *ContentNode
 	Validate(metadata Metadata, options ContentValidationOptions) *multierror.Error
 }

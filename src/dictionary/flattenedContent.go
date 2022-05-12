@@ -13,6 +13,14 @@ func (f *FlattenedContent) ToFlattened() *FlattenedContent {
 	return f
 }
 
+func (f *FlattenedContent) ToNewFlattened() *FlattenedContent {
+	copied := FlattenedContent{}
+	for k, v := range *f {
+		copied[k] = v
+	}
+	return &copied
+}
+
 // Deflatten reads itself and builds a full DictionaryContent tree.
 // The receiving FlattenedDictionaryContent is expected to be valid; ie. without duplicate or invalid keys.
 func (f *FlattenedContent) ToTree() *ContentNode {
