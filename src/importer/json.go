@@ -11,7 +11,11 @@ import (
 )
 
 type jsonContentType map[string]map[string]string
-type jsonMetadataType map[string][]string
+type jsonMetadataType struct {
+	Version            string   `json:"version"`
+	RequiredLanguages  []string `json:"required_languages"`
+	SupportedLanguages []string `json:"supported_languages"`
+}
 
 type JsonDictionaryImporter struct{}
 
@@ -44,17 +48,11 @@ func (j JsonDictionaryImporter) ImportMetadata(file io.Reader) (dictionary.Metad
 	}
 
 	result := dictionary.Metadata{}
-	requiredLangs, ok := decoded["required_languages"]
-	if ok {
-		result.RequiredLanguages = requiredLangs
-	} else {
-		return dictionary.Metadata{}, errors.New("RequiredLanguages is required but not given")
-	}
-	supportedLangs, ok := decoded["supported_languages"]
-	if ok {
-		result.SupportedLanguages = supportedLangs
-	} else {
-		return dictionary.Metadata{}, errors.New("SupportedLanguages is required but not given")
+	result.RequiredLanguages = decoded.RequiredLanguages
+	result.SupportedLanguages = decoded.SupportedLanguages
+	result.Version = decoded.Version
+	if result.Version == "" {
+		return dictionary.Metadata{}, errors.New("version missing")
 	}
 
 	return result, nil

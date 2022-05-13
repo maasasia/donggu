@@ -1,4 +1,4 @@
-import { DATA, Language, _MDict_Impl, RequiredLanguage } from "./generated/dictionary";
+import { DATA, Language, _MDict_Impl, RequiredLanguage, Version } from "./generated/dictionary";
 
 export type FallbackOrderFn = (wanted?: Language) => [...Language[], RequiredLanguage];
 
@@ -8,6 +8,10 @@ export class Donggu extends _MDict_Impl {
             return this.resolve(key, options, language);
         };
         super(cb);
+    }
+
+    public get version(): string {
+        return Version;
     }
 
     public resolve<O>(key: keyof typeof DATA, options: O, language?: Language): string {

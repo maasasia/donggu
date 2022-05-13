@@ -6,6 +6,7 @@ import (
 )
 
 type Metadata struct {
+	Version            string
 	RequiredLanguages  []string
 	SupportedLanguages []string
 }
