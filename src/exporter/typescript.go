@@ -3,8 +3,10 @@ package exporter
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -22,6 +24,10 @@ func (t TypescriptDictionaryExporter) Export(
 	content dictionary.ContentRepresentation,
 	metadata dictionary.Metadata,
 ) error {
+	if err := t.prepareProject(projectRoot); err != nil {
+		return errors.Wrap(err, "failed to prepare project")
+	}
+
 	builder := newTypescriptContentBuilder(metadata)
 	if err := builder.Run(content.ToTree()); err != nil {
 		return err
@@ -35,6 +41,21 @@ func (t TypescriptDictionaryExporter) Export(
 
 	builder.Build(metadata, file)
 	return nil
+}
+
+func (t TypescriptDictionaryExporter) prepareProject(projectRoot string) error {
+	if err := os.RemoveAll(projectRoot); err != nil {
+		return err
+	}
+
+	skipRegex := regexp.MustCompile("(dist|node_modules|generated)")
+	skipFunc := func(src string) (bool, error) {
+		return skipRegex.MatchString(src), nil
+	}
+	if err := code.CopyTemplateTo("typescript", projectRoot, code.CopyTemplateOptions{Skip: skipFunc}); err != nil {
+		return err
+	}
+	return os.Mkdir(path.Join(projectRoot, "generated"), fs.ModePerm)
 }
 
 type typescriptContentBuilder struct {

@@ -7,6 +7,8 @@ require (
 	github.com/pkg/errors v0.9.1
 )
 
+require github.com/otiai10/copy v1.7.0
+
 require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	golang.org/x/text v0.3.7
