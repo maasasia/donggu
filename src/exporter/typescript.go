@@ -13,23 +13,26 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TypescriptDictionaryExporter is a DictionaryProjectExporter
+// generating a Typescript package for using the dictionary.
 type TypescriptDictionaryExporter struct{}
 
-func (t TypescriptDictionaryExporter) ExportMetadata(filePath string, metadata dictionary.Metadata) error {
-	return nil
-}
-
-func (t TypescriptDictionaryExporter) ExportContent(filePath string, content dictionary.ContentRepresentation, metadata dictionary.Metadata) error {
+func (t TypescriptDictionaryExporter) Export(
+	projectRoot string,
+	content dictionary.ContentRepresentation,
+	metadata dictionary.Metadata,
+) error {
 	builder := newTypescriptContentBuilder(metadata)
 	if err := builder.Run(content.ToTree()); err != nil {
 		return err
 	}
 
-	file, err := os.OpenFile(path.Join(filePath, "generated/dictionary.ts"), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0755)
+	file, err := os.OpenFile(path.Join(projectRoot, "generated/dictionary.ts"), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0755)
 	if err != nil {
 		return errors.Wrap(err, "failed to open file")
 	}
 	defer file.Close()
+
 	builder.Build(metadata, file)
 	return nil
 }

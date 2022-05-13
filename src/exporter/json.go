@@ -2,22 +2,21 @@ package exporter
 
 import (
 	"encoding/json"
-	"os"
+	"io"
 
 	"github.com/maasasia/donggu/dictionary"
 	"github.com/pkg/errors"
 )
 
+// JsonDictionaryExporter is a DictionaryFileExporter.
 type JsonDictionaryExporter struct{}
 
-func (j JsonDictionaryExporter) ExportContent(filePath string, content dictionary.ContentRepresentation) error {
+func (j JsonDictionaryExporter) ExportContent(
+	file io.Writer,
+	content dictionary.ContentRepresentation,
+	_ dictionary.Metadata,
+) error {
 	flattened := content.ToFlattened()
-
-	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0755)
-	if err != nil {
-		return errors.Wrap(err, "failed to open file")
-	}
-	defer file.Close()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
@@ -27,13 +26,7 @@ func (j JsonDictionaryExporter) ExportContent(filePath string, content dictionar
 	return nil
 }
 
-func (j JsonDictionaryExporter) ExportMetadata(filePath string, metadata dictionary.Metadata) error {
-	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0755)
-	if err != nil {
-		return errors.Wrap(err, "failed to open file")
-	}
-	defer file.Close()
-
+func (j JsonDictionaryExporter) ExportMetadata(file io.Writer, metadata dictionary.Metadata) error {
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 
