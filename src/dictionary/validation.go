@@ -53,7 +53,7 @@ func (c ContentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 			}
 		}
 	}
-	for key, value := range entry {
+	for key := range entry {
 		if strings.ToLower(key) != key {
 			err = errors.Errorf("key '%s' should be lowercase", key)
 			return
@@ -66,7 +66,7 @@ func (c ContentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 		if !isSupportedLang {
 			continue
 		}
-		langTemplateKeys, contentErr := c.ParseFormatString(value)
+		langTemplateKeys, contentErr := entry.TemplateKeys(key)
 		if contentErr != nil {
 			err = errors.Wrapf(contentErr, "invalid template for '%s'", key)
 			return
@@ -87,26 +87,6 @@ func (c ContentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 		}
 	}
 	return
-}
-
-func (c ContentValidator) ParseFormatString(format string) (map[string]TemplateKeyFormat, error) {
-	templates := map[string]TemplateKeyFormat{}
-	for _, template := range c.templateRegex.FindAllString(format, -1) {
-		itemMatch := c.templateItemRegex.FindAllStringSubmatch(template, -1)
-		if len(itemMatch) == 0 {
-			return map[string]TemplateKeyFormat{}, errors.Errorf("invalid template format '%s'", template)
-		}
-		groups := itemMatch[0]
-		if _, exists := templates[groups[1]]; exists {
-			return map[string]TemplateKeyFormat{}, errors.Errorf("duplicate template key '%s'", groups[1])
-		}
-		if groups[2] == "" {
-			templates[groups[1]] = "string"
-		} else {
-			templates[groups[1]] = TemplateKeyFormat(groups[2])
-		}
-	}
-	return templates, nil
 }
 
 func ValidateJoinedKey(key string) error {
