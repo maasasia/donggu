@@ -1,8 +1,8 @@
-import { DATA, Language, MDictImpl, RequiredLanguage } from "./generated/dictionary";
+import { DATA, Language, _MDict_Impl, RequiredLanguage } from "./generated/dictionary";
 
 export type FallbackOrderFn = (wanted?: Language) => [...Language[], RequiredLanguage];
 
-export class Donggu extends MDictImpl {
+export class Donggu extends _MDict_Impl {
     constructor(private readonly getFallbackOrder: FallbackOrderFn) {
         const cb = (key: keyof typeof DATA, options: unknown, language?: Language) => {
             return this.resolve(key, options, language);

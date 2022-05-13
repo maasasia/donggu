@@ -225,15 +225,15 @@ func (t *typescriptContentBuilder) Build(metadata dictionary.Metadata, w io.Writ
 }
 
 func (t typescriptContentBuilder) argsInterfaceName(fullKey dictionary.EntryKey) string {
-	return fmt.Sprintf("%sArgs", fullKey.PascalCase())
+	return fullKey.PascalCase() + "_Args"
 }
 
 func (t typescriptContentBuilder) nodeInterfaceName(key dictionary.EntryKey) string {
-	return key.PascalCase() + "MDict"
+	return key.PascalCase() + "_MDict"
 }
 
 func (t typescriptContentBuilder) nodeImplName(key dictionary.EntryKey) string {
-	return t.nodeInterfaceName(key) + "Impl"
+	return t.nodeInterfaceName(key) + "_Impl"
 }
 
 func (t typescriptContentBuilder) resolveArgumentType(argType dictionary.TemplateKeyFormat) string {
