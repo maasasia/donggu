@@ -171,7 +171,9 @@ func (t *typescriptContentBuilder) writeEntryDataToBuilder(fullKey dictionary.En
 		if argType == "" {
 			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", lang, value))
 		} else {
-			templateString := entry.ReplacedTemplateValue(lang, t.templateFormatterCall)
+			templateString := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
+				return "${" + t.templateFormatterCall(key, format) + "}"
+			})
 			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", lang, argType, templateString))
 		}
 	}
