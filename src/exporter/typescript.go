@@ -86,44 +86,69 @@ func newTypescriptContentBuilder(metadata dictionary.Metadata) *typescriptConten
 }
 
 func (t *typescriptContentBuilder) Run(content *dictionary.ContentNode) error {
-	return t.walk(content, dictionary.EntryKey(""))
+	return t.walk(content, dictionary.EntryKey(""), nil)
 }
 
-func (t *typescriptContentBuilder) walk(contentNode *dictionary.ContentNode, positionKey dictionary.EntryKey) error {
+func (t *typescriptContentBuilder) walk(contentNode *dictionary.ContentNode, positionKey dictionary.EntryKey, selfNameEntry dictionary.Entry) error {
 	childPropertyNames := map[string]struct{}{}
 	entryParamInterfaceNames := map[string]string{}
 	entryFullKeys := map[string]dictionary.EntryKey{}
 
+	entriesToSkip := map[string]struct{}{}
+
 	for key, child := range contentNode.Children {
 		propertyName := code.ToCamelCase(key)
 		childPropertyNames[propertyName] = struct{}{}
-		if err := t.walk(child, positionKey.NewChild(key)); err != nil {
+
+		var err error
+		if _, ok := contentNode.Entries[key]; ok {
+			entriesToSkip[key] = struct{}{}
+			err = t.walk(child, positionKey.NewChild(key), contentNode.Entries[key])
+		} else {
+			err = t.walk(child, positionKey.NewChild(key), nil)
+		}
+		if err != nil {
 			return err
 		}
 	}
 	for key, entry := range contentNode.Entries {
-		methodName, interfaceName, err := t.addEntry(entry, positionKey.NewChild(key))
+		if _, ok := entriesToSkip[key]; ok {
+			continue
+		}
+		methodName, interfaceName, err := t.addEntry(entry, positionKey.NewChild(key), false)
 		if err != nil {
 			return err
 		}
 		entryParamInterfaceNames[methodName] = interfaceName
 		entryFullKeys[methodName] = positionKey.NewChild(key)
 	}
+	if selfNameEntry != nil {
+		methodName, interfaceName, err := t.addEntry(selfNameEntry, positionKey.NewChild("$"), true)
+		if err != nil {
+			return err
+		}
+		entryParamInterfaceNames[methodName] = interfaceName
+		entryFullKeys[methodName] = positionKey.NewChild("$")
+	}
 
 	t.writeNodeToBuilder(positionKey, &childPropertyNames, &entryParamInterfaceNames, &entryFullKeys)
 	return nil
 }
 
-func (t *typescriptContentBuilder) addEntry(entry dictionary.Entry, entryKey dictionary.EntryKey) (methodName string, interfaceName string, err error) {
+func (t *typescriptContentBuilder) addEntry(entry dictionary.Entry, entryKey dictionary.EntryKey, isSelfEntry bool) (methodName string, interfaceName string, err error) {
 	templateKeys, validateErr := t.contentValidator.Validate(entry)
 	if validateErr != nil {
 		err = errors.Wrap(validateErr, "failed to add leaf")
 		return
 	}
 
-	methodName = code.ToCamelCase(entryKey.LastPart())
+	methodName = "_"
+	if !isSelfEntry {
+		methodName = code.ToCamelCase(entryKey.LastPart())
+	}
 	interfaceName = ""
 	ownArgTypeNeeded := len(templateKeys) > 0
+
 	if ownArgTypeNeeded {
 		interfaceName = t.argsInterfaceName(entryKey)
 		tsArgTypes := map[string]string{}
