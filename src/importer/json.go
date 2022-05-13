@@ -2,6 +2,7 @@ package importer
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"path"
 
@@ -14,13 +15,15 @@ type jsonMetadataType map[string][]string
 
 type JsonDictionaryImporter struct{}
 
-func (j JsonDictionaryImporter) ImportContent(filePath string, _ dictionary.Metadata) (dictionary.ContentRepresentation, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0)
-	if err != nil {
-		return &dictionary.FlattenedContent{}, errors.Wrap(err, "failed to open file")
-	}
-	defer file.Close()
+func (j JsonDictionaryImporter) OpenMetadataFile(projectRoot string) (io.ReadCloser, error) {
+	return os.OpenFile(path.Join(projectRoot, "metadata.json"), os.O_RDONLY, 0)
+}
 
+func (j JsonDictionaryImporter) OpenContentFile(projectRoot string) (io.ReadCloser, error) {
+	return os.OpenFile(path.Join(projectRoot, "content.json"), os.O_RDONLY, 0)
+}
+
+func (j JsonDictionaryImporter) ImportContent(file io.Reader, _ dictionary.Metadata) (dictionary.ContentRepresentation, error) {
 	decoder := json.NewDecoder(file)
 	decoded := jsonContentType{}
 	if err := decoder.Decode(&decoded); err != nil {
@@ -33,13 +36,7 @@ func (j JsonDictionaryImporter) ImportContent(filePath string, _ dictionary.Meta
 	return &result, nil
 }
 
-func (j JsonDictionaryImporter) ImportMetadata(filePath string) (dictionary.Metadata, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0)
-	if err != nil {
-		return dictionary.Metadata{}, errors.Wrap(err, "failed to open file")
-	}
-	defer file.Close()
-
+func (j JsonDictionaryImporter) ImportMetadata(file io.Reader) (dictionary.Metadata, error) {
 	decoder := json.NewDecoder(file)
 	decoded := jsonMetadataType{}
 	if err := decoder.Decode(&decoded); err != nil {
@@ -51,21 +48,14 @@ func (j JsonDictionaryImporter) ImportMetadata(filePath string) (dictionary.Meta
 	if ok {
 		result.RequiredLanguages = requiredLangs
 	} else {
-		return dictionary.Metadata{}, errors.Wrap(err, "RequiredLanguages is required but not given")
+		return dictionary.Metadata{}, errors.New("RequiredLanguages is required but not given")
 	}
 	supportedLangs, ok := decoded["supported_languages"]
 	if ok {
 		result.SupportedLanguages = supportedLangs
 	} else {
-		return dictionary.Metadata{}, errors.Wrap(err, "SupportedLanguages is required but not given")
+		return dictionary.Metadata{}, errors.New("SupportedLanguages is required but not given")
 	}
 
 	return result, nil
-}
-
-func (j JsonDictionaryImporter) ResolveProject(projectPath string) (ResolveProjectResult, error) {
-	return ResolveProjectResult{
-		ContentPath:  path.Join(projectPath, "content.json"),
-		MetadataPath: path.Join(projectPath, "metadata.json"),
-	}, nil
 }

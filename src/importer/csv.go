@@ -17,26 +17,32 @@ const contextColumnName = "context"
 
 type CsvDictionaryImporter struct{}
 
-func (c CsvDictionaryImporter) ImportContent(filePath string, metadata dictionary.Metadata) (dictionary.ContentRepresentation, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0)
-	if err != nil {
-		return &dictionary.FlattenedContent{}, errors.Wrap(err, "failed to open file")
-	}
-	defer file.Close()
+func (c CsvDictionaryImporter) OpenMetadataFile(projectRoot string) (io.ReadCloser, error) {
+	return nil, nil
+}
 
+func (c CsvDictionaryImporter) ImportMetadata(file io.Reader) (dictionary.Metadata, error) {
+	return dictionary.Metadata{}, errors.New("unsupported")
+}
+
+func (c CsvDictionaryImporter) OpenContentFile(projectRoot string) (io.ReadCloser, error) {
+	return os.OpenFile(path.Join(projectRoot, "content.csv"), os.O_RDONLY, 0)
+}
+
+func (c CsvDictionaryImporter) ImportContent(file io.Reader, metadata dictionary.Metadata) (dictionary.ContentRepresentation, error) {
 	langSet := metadata.SupportedLanguageSet()
 
 	reader := csv.NewReader(file)
 	header, headerReadErr := reader.Read()
 	if headerReadErr != nil {
-		return &dictionary.FlattenedContent{}, errors.Wrap(err, "error while reading csv header")
+		return &dictionary.FlattenedContent{}, errors.Wrap(headerReadErr, "error while reading csv header")
 	}
 	for index, col := range header {
 		col = strings.ToLower(col)
 		header[index] = col
 		_, isLanguage := langSet[col]
 		if !isLanguage && col != contextColumnName && col != indexColumnName && col != keyColumnName {
-			return &dictionary.FlattenedContent{}, errors.Wrapf(err, "invalid header '%s' at index %d", col, index)
+			return &dictionary.FlattenedContent{}, errors.Errorf("invalid header '%s' at index %d", col, index)
 		}
 	}
 
@@ -47,7 +53,7 @@ func (c CsvDictionaryImporter) ImportContent(filePath string, metadata dictionar
 			break
 		}
 		if lineErr != nil {
-			return &dictionary.FlattenedContent{}, errors.Wrap(err, "error while reading csv body")
+			return &dictionary.FlattenedContent{}, errors.Wrap(lineErr, "error while reading csv body")
 		}
 
 		keyName := ""
@@ -68,15 +74,4 @@ func (c CsvDictionaryImporter) ImportContent(filePath string, metadata dictionar
 	}
 
 	return &result, nil
-}
-
-func (c CsvDictionaryImporter) ImportMetadata(filePath string) (dictionary.Metadata, error) {
-	return dictionary.Metadata{}, errors.New("unsupported")
-}
-
-func (c CsvDictionaryImporter) ResolveProject(projectPath string) (ResolveProjectResult, error) {
-	return ResolveProjectResult{
-		ContentPath:  path.Join(projectPath, "content.csv"),
-		MetadataPath: "",
-	}, nil
 }
