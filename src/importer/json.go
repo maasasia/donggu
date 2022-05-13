@@ -27,8 +27,8 @@ func (j JsonDictionaryImporter) ImportContent(filePath string, _ dictionary.Meta
 		return &dictionary.FlattenedContent{}, errors.Wrap(err, "failed to decode JSON")
 	}
 	result := dictionary.FlattenedContent{}
-	for lang, entry := range decoded {
-		result[lang] = dictionary.Entry(entry)
+	for entryKey, entry := range decoded {
+		result[dictionary.EntryKey(entryKey)] = dictionary.Entry(entry)
 	}
 	return &result, nil
 }

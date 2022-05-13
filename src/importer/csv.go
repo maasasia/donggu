@@ -61,10 +61,10 @@ func (c CsvDictionaryImporter) ImportContent(filePath string, metadata dictionar
 				entry[colName] = col
 			}
 		}
-		if _, ok := result[keyName]; ok {
+		if _, ok := result[dictionary.EntryKey(keyName)]; ok {
 			return &dictionary.FlattenedContent{}, errors.Errorf("duplicate key '%s'", keyName)
 		}
-		result[keyName] = entry
+		result[dictionary.EntryKey(keyName)] = entry
 	}
 
 	return &result, nil

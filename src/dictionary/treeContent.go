@@ -2,29 +2,24 @@ package dictionary
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
 type ContentNode struct {
-	Key      []string
+	Key      EntryKey
 	Children map[string]*ContentNode
 	Entries  map[string]Entry
 }
 
-func newContent(key []string) ContentNode {
+func newContent(key EntryKey) ContentNode {
 	return ContentNode{
 		// TODO: Copy if key should be mutable for some reason
 		Key:      key,
 		Children: map[string]*ContentNode{},
 		Entries:  map[string]Entry{},
 	}
-}
-
-func (c *ContentNode) JoinedKey() string {
-	return strings.Join(c.Key, ".")
 }
 
 func (c *ContentNode) ToTree() *ContentNode {
@@ -42,13 +37,8 @@ func (c *ContentNode) ToFlattened() *FlattenedContent {
 }
 
 func (c *ContentNode) toFlattenedWalk(flattened *FlattenedContent) {
-	joinedKey := c.JoinedKey()
 	for key, entry := range c.Entries {
-		entryKey := key
-		if joinedKey != "" {
-			entryKey = joinedKey + "." + entryKey
-		}
-		(*flattened)[entryKey] = entry
+		(*flattened)[c.Key.NewChild(key)] = entry
 	}
 	for _, child := range c.Children {
 		child.toFlattenedWalk(flattened)
@@ -61,12 +51,8 @@ func (c *ContentNode) Validate(metadata Metadata, options ContentValidationOptio
 }
 
 func (c *ContentNode) validateWalk(validator *ContentValidator) (err *multierror.Error) {
-	joinedKey := c.JoinedKey()
 	for key, entry := range c.Entries {
-		entryKey := key
-		if joinedKey != "" {
-			entryKey = joinedKey + "." + entryKey
-		}
+		entryKey := c.Key.NewChild(key)
 		if keyErr := ValidateJoinedKey(entryKey); keyErr != nil {
 			err = multierror.Append(err, errors.Wrapf(keyErr, "invalid content '%s'", key))
 		}
@@ -87,7 +73,7 @@ func (c *ContentNode) Print() {
 }
 
 func (c *ContentNode) printWalk(indent string) {
-	fmt.Printf("%s[%s]\n", indent, c.JoinedKey())
+	fmt.Printf("%s[%s]\n", indent, c.Key)
 	for entry, entryContent := range c.Entries {
 		fmt.Printf("%s  %s: %+v\n", indent, entry, entryContent.String())
 	}

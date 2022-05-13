@@ -34,19 +34,16 @@ func (t TypescriptDictionaryExporter) ExportContent(filePath string, content dic
 	return nil
 }
 
-// ExportMetadata(filePath string, metadata dictionary.Metadata) error
-
-type TypescriptContentBuilder struct {
+type typescriptContentBuilder struct {
 	dataBuilder     code.IndentedCodeBuilder
 	argTypeBuilder  code.IndentedCodeBuilder
 	nodeTypeBuilder code.IndentedCodeBuilder
 	nodeImplBuilder code.IndentedCodeBuilder
 
 	contentValidator dictionary.ContentValidator
-	rootNode         *TypescriptContentBuilderNode
 }
 
-func (t *TypescriptContentBuilder) AddArgType(key string, value map[string]string) {
+func (t *typescriptContentBuilder) AddArgType(key string, value map[string]string) {
 	t.argTypeBuilder.AppendLines(fmt.Sprintf("export interface %s {", key))
 	t.argTypeBuilder.Indent()
 	for arg, argType := range value {
@@ -56,9 +53,74 @@ func (t *TypescriptContentBuilder) AddArgType(key string, value map[string]strin
 	t.argTypeBuilder.AppendLines("}")
 }
 
-func (t *TypescriptContentBuilder) AddNodeContent(nodeFullKey string, node *TypescriptContentBuilderNode) {
-	nodeTypeInterfaceName := code.FullKeyToPascalCase(nodeFullKey) + "MDict"
-	nodeImplName := nodeTypeInterfaceName + "Impl"
+func newTypescriptContentBuilder(metadata dictionary.Metadata) *typescriptContentBuilder {
+	return &typescriptContentBuilder{
+		contentValidator: dictionary.NewContentValidator(metadata, dictionary.ContentValidationOptions{
+			SkipLangSupportCheck: true,
+		}),
+	}
+}
+
+func (t *typescriptContentBuilder) Run(content *dictionary.ContentNode) error {
+	return t.walk(content, dictionary.EntryKey(""))
+}
+
+func (t *typescriptContentBuilder) walk(contentNode *dictionary.ContentNode, positionKey dictionary.EntryKey) error {
+	childPropertyNames := map[string]struct{}{}
+	entryParamInterfaceNames := map[string]string{}
+	entryFullKeys := map[string]dictionary.EntryKey{}
+
+	for key, child := range contentNode.Children {
+		propertyName := code.ToCamelCase(key)
+		childPropertyNames[propertyName] = struct{}{}
+		if err := t.walk(child, positionKey.NewChild(key)); err != nil {
+			return err
+		}
+	}
+	for key, entry := range contentNode.Entries {
+		methodName, interfaceName, err := t.addEntry(entry, positionKey.NewChild(key))
+		if err != nil {
+			return err
+		}
+		entryParamInterfaceNames[methodName] = interfaceName
+		entryFullKeys[methodName] = positionKey.NewChild(key)
+	}
+
+	t.writeNodeToBuilder(positionKey, &childPropertyNames, &entryParamInterfaceNames, &entryFullKeys)
+	return nil
+}
+
+func (t *typescriptContentBuilder) addEntry(entry dictionary.Entry, entryKey dictionary.EntryKey) (methodName string, interfaceName string, err error) {
+	templateKeys, validateErr := t.contentValidator.Validate(entry)
+	if validateErr != nil {
+		err = errors.Wrap(validateErr, "failed to add leaf")
+		return
+	}
+
+	methodName = code.ToCamelCase(entryKey.LastPart())
+	interfaceName = ""
+	ownArgTypeNeeded := len(templateKeys) > 0
+	if ownArgTypeNeeded {
+		interfaceName = t.argsInterfaceName(entryKey)
+		tsArgTypes := map[string]string{}
+		for k, v := range templateKeys {
+			tsArgTypes[code.TemplateKeyToCamelCase(k)] = t.resolveArgumentType(v)
+		}
+		t.AddArgType(interfaceName, tsArgTypes)
+	}
+	t.writeEntryDataToBuilder(entryKey, interfaceName, entry)
+
+	return
+}
+
+func (t *typescriptContentBuilder) writeNodeToBuilder(
+	parentKey dictionary.EntryKey,
+	childPropertyNames *map[string]struct{},
+	entryParamInterfaceNames *map[string]string,
+	entryFullKeys *map[string]dictionary.EntryKey) {
+
+	nodeTypeInterfaceName := t.nodeInterfaceName(parentKey)
+	nodeImplName := t.nodeImplName(parentKey)
 
 	t.nodeTypeBuilder.AppendLines(fmt.Sprintf("export interface %s {", nodeTypeInterfaceName))
 	t.nodeTypeBuilder.Indent()
@@ -66,27 +128,29 @@ func (t *TypescriptContentBuilder) AddNodeContent(nodeFullKey string, node *Type
 	t.nodeImplBuilder.Indent()
 	t.nodeImplBuilder.AppendLines("constructor(private readonly cb: ResolverFunc) {}", "")
 
-	for childName := range node.children {
-		childTypeInterfaceName := code.FullKeyToPascalCase(childFullKey(nodeFullKey, childName)) + "MDict"
-		childImplName := childTypeInterfaceName + "Impl"
+	for childName := range *childPropertyNames {
+		childKey := parentKey.NewChild(childName)
+		childTypeInterfaceName := t.nodeInterfaceName(childKey)
+		childImplName := t.nodeImplName(childKey)
 		t.nodeTypeBuilder.AppendLines(fmt.Sprintf("%s: %s;", childName, childTypeInterfaceName))
 		t.nodeImplBuilder.AppendLines(fmt.Sprintf("get %s() { return new %s(this.cb); }", childName, childImplName))
 	}
-	if len(node.children) > 0 && len(node.methods) > 0 {
+	if len(*childPropertyNames) > 0 && len(*entryFullKeys) > 0 {
 		t.nodeTypeBuilder.AppendLines("")
 		t.nodeImplBuilder.AppendLines("")
 	}
-	for methodName := range node.methods {
-		fullName := node.methodFullNames[methodName]
-		if node.methods[methodName] == "" {
+	for methodName := range *entryFullKeys {
+		entryKey := (*entryFullKeys)[methodName]
+		interfaceName := (*entryParamInterfaceNames)[methodName]
+		if interfaceName == "" {
 			// No arguments
 			t.nodeTypeBuilder.AppendLines(fmt.Sprintf("%s: DictionaryNFnItem;", methodName))
-			t.nodeImplBuilder.AppendLines(fmt.Sprintf(`%s(language?: Language) { return this.cb("%s", undefined, language) }`, methodName, fullName))
+			t.nodeImplBuilder.AppendLines(fmt.Sprintf(`%s(language?: Language) { return this.cb("%s", undefined, language) }`, methodName, entryKey))
 		} else {
-			t.nodeTypeBuilder.AppendLines(fmt.Sprintf("%s: DictionaryFnItem<%s>;", methodName, node.methods[methodName]))
+			t.nodeTypeBuilder.AppendLines(fmt.Sprintf("%s: DictionaryFnItem<%s>;", methodName, interfaceName))
 			t.nodeImplBuilder.AppendLines(
 				fmt.Sprintf(`%s(param: %s, language?: Language) { return this.cb("%s", param, language) }`,
-					methodName, node.methods[methodName], fullName),
+					methodName, interfaceName, entryKey),
 			)
 		}
 	}
@@ -97,80 +161,39 @@ func (t *TypescriptContentBuilder) AddNodeContent(nodeFullKey string, node *Type
 	t.nodeImplBuilder.AppendLines("}")
 }
 
-func newTypescriptContentBuilder(metadata dictionary.Metadata) *TypescriptContentBuilder {
-	root := newTypescriptContentBuilderNode()
-	return &TypescriptContentBuilder{
-		contentValidator: dictionary.NewContentValidator(metadata, dictionary.ContentValidationOptions{
-			SkipLangSupportCheck: true,
-		}),
-		rootNode: &root,
-	}
-}
-
-func (t *TypescriptContentBuilder) Run(content *dictionary.ContentNode) error {
-	return t.rootNode.walk(t, content, "")
-}
-
-type TypescriptContentBuilderNode struct {
-	children map[string]*TypescriptContentBuilderNode
-	// Map of 'method name' -> 'argType name'. No arguments if string is zero
-	methods         map[string]string
-	methodFullNames map[string]string
-}
-
-func newTypescriptContentBuilderNode() TypescriptContentBuilderNode {
-	return TypescriptContentBuilderNode{
-		children:        map[string]*TypescriptContentBuilderNode{},
-		methods:         map[string]string{},
-		methodFullNames: map[string]string{},
-	}
-}
-
-func (t *TypescriptContentBuilderNode) walk(builder *TypescriptContentBuilder, contentNode *dictionary.ContentNode, fullKey string) error {
-	for key, child := range contentNode.Children {
-		propertyName := code.FullKeyToCamelCase(key)
-		childNode := newTypescriptContentBuilderNode()
-		t.children[propertyName] = &childNode
-		if err := childNode.walk(builder, child, childFullKey(fullKey, key)); err != nil {
-			return err
+func (t *typescriptContentBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey, argType string, entry dictionary.Entry) {
+	t.dataBuilder.AppendLines(fmt.Sprintf(`"%s": {`, fullKey))
+	t.dataBuilder.Indent()
+	for lang, value := range entry {
+		if lang == "context" {
+			continue
+		}
+		if argType == "" {
+			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", lang, value))
+		} else {
+			templateString := entry.ReplacedTemplateValue(lang, t.templateFormatterCall)
+			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", lang, argType, templateString))
 		}
 	}
-	for key, entry := range contentNode.Entries {
-		fullKey := childFullKey(fullKey, key)
-		if err := builder.AddLeaf(key, fullKey, t, entry); err != nil {
-			return err
-		}
-	}
-	builder.AddNodeContent(fullKey, t)
-	return nil
+	t.dataBuilder.Unindent()
+	t.dataBuilder.AppendLines("},")
 }
 
-func (t *TypescriptContentBuilder) AddLeaf(key string, fullKey string, parent *TypescriptContentBuilderNode, entry dictionary.Entry) error {
-	templateKeys, validateErr := t.contentValidator.Validate(entry)
-	if validateErr != nil {
-		return errors.Wrap(validateErr, "failed to add leaf")
+func (t typescriptContentBuilder) templateFormatterCall(key string, format dictionary.TemplateKeyFormat) string {
+	key = code.TemplateKeyToCamelCase(key)
+	switch format {
+	case "int":
+		return fmt.Sprintf("Formatter.int(param.%s)", key)
+	case "float":
+		return fmt.Sprintf("Formatter.float(param.%s)", key)
+	case "bool":
+		return fmt.Sprintf("Formatter.bool(param.%s)", key)
+	default:
+		return fmt.Sprintf("param.%s", key)
 	}
-
-	interfaceName := ""
-	ownArgTypeNeeded := len(templateKeys) > 0
-
-	if ownArgTypeNeeded {
-		interfaceName = t.argsInterfaceName(fullKey)
-		tsArgTypes := map[string]string{}
-		for k, v := range templateKeys {
-			tsArgTypes[code.TemplateKeyToCamelCase(k)] = t.resolveArgumentType(v)
-		}
-		t.AddArgType(interfaceName, tsArgTypes)
-	}
-	t.AddEntry(fullKey, interfaceName, entry)
-
-	methodName := code.FullKeyToCamelCase(key)
-	parent.methods[methodName] = interfaceName
-	parent.methodFullNames[methodName] = fullKey
-	return nil
 }
 
-func (t *TypescriptContentBuilder) Build(metadata dictionary.Metadata, w io.Writer) {
+func (t *typescriptContentBuilder) Build(metadata dictionary.Metadata, w io.Writer) {
 	builder := code.IndentedCodeBuilder{}
 
 	builder.AppendLines(
@@ -199,43 +222,19 @@ func (t *TypescriptContentBuilder) Build(metadata dictionary.Metadata, w io.Writ
 	builder.Build(w)
 }
 
-func (t *TypescriptContentBuilder) AddEntry(fullKey string, argType string, entry dictionary.Entry) {
-	t.dataBuilder.AppendLines(fmt.Sprintf(`"%s": {`, fullKey))
-	t.dataBuilder.Indent()
-	for lang, value := range entry {
-		if lang == "context" {
-			continue
-		}
-		if argType == "" {
-			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", lang, value))
-		} else {
-			templateString := entry.ReplacedTemplateValue(lang, t.templateFormatterCall)
-			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", lang, argType, templateString))
-		}
-	}
-	t.dataBuilder.Unindent()
-	t.dataBuilder.AppendLines("},")
+func (t typescriptContentBuilder) argsInterfaceName(fullKey dictionary.EntryKey) string {
+	return fmt.Sprintf("%sArgs", fullKey.PascalCase())
 }
 
-func (t TypescriptContentBuilder) templateFormatterCall(key string, format dictionary.TemplateKeyFormat) string {
-	key = code.TemplateKeyToCamelCase(key)
-	switch format {
-	case "int":
-		return fmt.Sprintf("Formatter.int(param.%s)", key)
-	case "float":
-		return fmt.Sprintf("Formatter.float(param.%s)", key)
-	case "bool":
-		return fmt.Sprintf("Formatter.bool(param.%s)", key)
-	default:
-		return fmt.Sprintf("param.%s", key)
-	}
+func (t typescriptContentBuilder) nodeInterfaceName(key dictionary.EntryKey) string {
+	return key.PascalCase() + "MDict"
 }
 
-func (t TypescriptContentBuilder) argsInterfaceName(fullKey string) string {
-	return fmt.Sprintf("%sArgs", code.FullKeyToPascalCase(fullKey))
+func (t typescriptContentBuilder) nodeImplName(key dictionary.EntryKey) string {
+	return t.nodeInterfaceName(key) + "Impl"
 }
 
-func (t TypescriptContentBuilder) resolveArgumentType(argType dictionary.TemplateKeyFormat) string {
+func (t typescriptContentBuilder) resolveArgumentType(argType dictionary.TemplateKeyFormat) string {
 	switch argType {
 	case "int":
 		fallthrough
@@ -245,13 +244,5 @@ func (t TypescriptContentBuilder) resolveArgumentType(argType dictionary.Templat
 		return "boolean"
 	default:
 		return "string"
-	}
-}
-
-func childFullKey(key, childPart string) string {
-	if key == "" {
-		return childPart
-	} else {
-		return key + "." + childPart
 	}
 }

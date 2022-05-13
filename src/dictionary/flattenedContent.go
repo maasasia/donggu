@@ -1,13 +1,11 @@
 package dictionary
 
 import (
-	"strings"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
-type FlattenedContent map[string]Entry
+type FlattenedContent map[EntryKey]Entry
 
 func (f *FlattenedContent) ToFlattened() *FlattenedContent {
 	return f
@@ -24,14 +22,16 @@ func (f *FlattenedContent) ToNewFlattened() *FlattenedContent {
 // Deflatten reads itself and builds a full DictionaryContent tree.
 // The receiving FlattenedDictionaryContent is expected to be valid; ie. without duplicate or invalid keys.
 func (f *FlattenedContent) ToTree() *ContentNode {
-	root := newContent([]string{})
+	root := newContent("")
 	for key, entry := range *f {
-		keyParts := strings.Split(key, ".")
+		keyParts := key.Parts()
 		position := &root
+		positionKey := EntryKey("")
 		for i := 0; i < len(keyParts)-1; i++ {
 			keyPart := keyParts[i]
+			positionKey = positionKey.NewChild(keyPart)
 			if position.Children[keyPart] == nil {
-				newChild := newContent(keyParts[0 : i+1])
+				newChild := newContent(positionKey)
 				position.Children[keyPart] = &newChild
 			}
 			position = position.Children[keyPart]

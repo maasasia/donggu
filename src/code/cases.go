@@ -6,8 +6,7 @@ import (
 	"unicode/utf8"
 )
 
-func FullKeyToPascalCase(fullKey string) string {
-	parts := strings.Split(fullKey, ".")
+func ToPascalCase(parts ...string) string {
 	for i := range parts {
 		partParts := strings.Split(parts[i], "_")
 		for j := range partParts {
@@ -18,8 +17,7 @@ func FullKeyToPascalCase(fullKey string) string {
 	return strings.Join(parts, "")
 }
 
-func FullKeyToCamelCase(fullKey string) string {
-	parts := strings.Split(fullKey, ".")
+func ToCamelCase(parts ...string) string {
 	for i := range parts {
 		partParts := strings.Split(parts[i], "_")
 		for j := range partParts {

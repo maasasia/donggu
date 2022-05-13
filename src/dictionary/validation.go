@@ -89,9 +89,8 @@ func (c ContentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 	return
 }
 
-func ValidateJoinedKey(key string) error {
-	keyParts := strings.Split(key, ".")
-	for _, part := range keyParts {
+func ValidateJoinedKey(key EntryKey) error {
+	for _, part := range key.Parts() {
 		err := ValidateKeyPart(part)
 		if err != nil {
 			return errors.Wrapf(err, "invalid key '%s'", key)
