@@ -16,6 +16,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("project", "P", "", "Project folder (default: current directory)")
 	rootCmd.AddCommand(initExportCommand())
 	rootCmd.AddCommand(initMergeCommand())
+	rootCmd.AddCommand(initFormatCommand())
 }
 
 func Execute() {
