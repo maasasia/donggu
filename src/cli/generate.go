@@ -26,7 +26,7 @@ func execGenerateCommand(cmd *cobra.Command, args []string) error {
 			return errors.Wrap(err, "failed to export project")
 		}
 	} else if exporter := loadFileExporter(exporterName); exporter != nil {
-		file, err := os.OpenFile(targetRoot, os.O_TRUNC, os.ModePerm)
+		file, err := os.OpenFile(targetRoot, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 		if err != nil {
 			return errors.Wrap(err, "failed to open target file")
 		}
