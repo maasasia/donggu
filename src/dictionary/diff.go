@@ -23,12 +23,12 @@ func DiffContents(from, to ContentRepresentation) ContentDifference {
 
 	flatFrom, flatTo := from.ToFlattened(), to.ToFlattened()
 	for key := range *flatFrom {
-		if _, ok := (*flatFrom)[key]; !ok {
+		if _, ok := (*flatTo)[key]; !ok {
 			diff.DeletedKeys = append(diff.DeletedKeys, key)
 		}
 	}
 	for key := range *flatTo {
-		if _, ok := (*flatTo)[key]; !ok {
+		if _, ok := (*flatFrom)[key]; !ok {
 			diff.CreatedKeys = append(diff.CreatedKeys, key)
 		} else {
 			if len((*flatTo)[key]) == 0 && len((*flatFrom)[key]) == 0 {
