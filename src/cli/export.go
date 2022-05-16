@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func execGenerateCommand(cmd *cobra.Command, args []string) error {
+func execExportCommand(cmd *cobra.Command, args []string) error {
 	exporterName, targetRoot := args[0], args[1]
 	content, meta, err := loadProjectFromCommand(cmd)
 	if err != nil {
@@ -42,12 +42,12 @@ func execGenerateCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func initGenerateCommand() *cobra.Command {
+func initExportCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "generate [format] [path]",
-		Short: "Generate something",
+		Use:   "export [format] [path]",
+		Short: "Export something",
 		Args:  cobra.ExactArgs(2),
-		Run:   wrapExecCommand(execGenerateCommand),
+		Run:   wrapExecCommand(execExportCommand),
 	}
 
 	return cmd
