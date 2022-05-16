@@ -17,6 +17,7 @@ var importers = map[string]importer.DictionaryImporter{
 
 var fileExporters = map[string]exporter.DictionaryFileExporter{
 	"json": exporter.JsonDictionaryExporter{},
+	"csv":  exporter.CsvDictionaryExporter{},
 }
 
 var projectExporters = map[string]exporter.DictionaryProjectExporter{
