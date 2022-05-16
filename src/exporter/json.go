@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// JsonDictionaryExporter is a DictionaryFileExporter.
+// JsonDictionaryExporter is a DictionaryExporter.
 type JsonDictionaryExporter struct{}
 
 func (j JsonDictionaryExporter) Export(
