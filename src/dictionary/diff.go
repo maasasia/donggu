@@ -9,19 +9,25 @@ const (
 )
 
 type ContentDifference struct {
-	CreatedKeys []EntryKey
-	DeletedKeys []EntryKey
-	Changes     map[EntryKey]map[string]DiffFlag
+	CreatedKeys       []EntryKey
+	DeletedKeys       []EntryKey
+	Changes           map[EntryKey]map[string]DiffFlag
+	SourceKeyCount    int
+	DestKeyCount      int
+	UnchangedKeyCount int
 }
 
 func DiffContents(from, to ContentRepresentation) ContentDifference {
+	flatFrom, flatTo := from.ToFlattened(), to.ToFlattened()
 	diff := ContentDifference{
-		CreatedKeys: []EntryKey{},
-		DeletedKeys: []EntryKey{},
-		Changes:     map[EntryKey]map[string]DiffFlag{},
+		CreatedKeys:       []EntryKey{},
+		DeletedKeys:       []EntryKey{},
+		Changes:           map[EntryKey]map[string]DiffFlag{},
+		SourceKeyCount:    len(*flatFrom),
+		DestKeyCount:      len(*flatTo),
+		UnchangedKeyCount: 0,
 	}
 
-	flatFrom, flatTo := from.ToFlattened(), to.ToFlattened()
 	for key := range *flatFrom {
 		if _, ok := (*flatTo)[key]; !ok {
 			diff.DeletedKeys = append(diff.DeletedKeys, key)
@@ -61,6 +67,6 @@ func DiffContents(from, to ContentRepresentation) ContentDifference {
 			}
 		}
 	}
-
+	diff.UnchangedKeyCount = len(*flatTo) - len(diff.Changes) - len(diff.CreatedKeys)
 	return diff
 }
