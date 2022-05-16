@@ -15,6 +15,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	rootCmd.PersistentFlags().StringP("project", "P", "", "Project folder (default: current directory)")
 	rootCmd.AddCommand(initGenerateCommand())
+	rootCmd.AddCommand(initMergeCommand())
 }
 
 func Execute() {
