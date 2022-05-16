@@ -1,37 +1,29 @@
 package cli
 
-import (
-	"github.com/maasasia/donggu/dictionary"
-	"github.com/maasasia/donggu/importer"
-	"github.com/pkg/errors"
-)
+import "github.com/maasasia/donggu/exporter"
 
-func loadProject(projectRoot string) (content dictionary.ContentRepresentation, meta dictionary.Metadata, err error) {
-	jsonImporter := importer.JsonDictionaryImporter{}
+var fileExporters = map[string]exporter.DictionaryFileExporter{
+	"json": exporter.JsonDictionaryExporter{},
+}
 
-	metaFile, err := jsonImporter.OpenMetadataFile(projectRoot)
-	if err != nil {
-		err = errors.Wrap(err, "failed to open metadata file")
-		return
-	}
-	defer metaFile.Close()
+var projectExporters = map[string]exporter.DictionaryProjectExporter{
+	"typescript": exporter.TypescriptDictionaryExporter{},
+}
 
-	contentFile, err := jsonImporter.OpenContentFile(projectRoot)
-	if err != nil {
-		err = errors.Wrap(err, "failed to open content file")
-		return
-	}
-	defer contentFile.Close()
+func loadProjectExporter(name string) exporter.DictionaryProjectExporter {
+	projectExporter, isProjectExporter := projectExporters[name]
 
-	meta, err = jsonImporter.ImportMetadata(metaFile)
-	if err != nil {
-		err = errors.Wrap(err, "failed to read metadata file")
-		return
+	if isProjectExporter {
+		return projectExporter
 	}
-	content, err = jsonImporter.ImportContent(contentFile, meta)
-	if err != nil {
-		err = errors.Wrap(err, "failed to read content file")
-		return
+	return nil
+}
+
+func loadFileExporter(name string) exporter.DictionaryFileExporter {
+	fileExporter, isFileExporter := fileExporters[name]
+
+	if isFileExporter {
+		return fileExporter
 	}
-	return
+	return nil
 }
