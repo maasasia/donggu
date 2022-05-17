@@ -1,8 +1,7 @@
 on:
   push: 
-    # TODO: Change after testing
-    branches:
-      - ci/build-release
+    tags:
+      - release/**
 jobs:
   build_release:
     runs-on: ubuntu-latest
@@ -42,5 +41,21 @@ jobs:
       - name: Upload artifact 
         uses: actions/upload-artifact@v3
         with:
-          name: build-${{ matrix.os }}-${{ matrix.arch }}
+          name: donggu-${{ matrix.os }}-${{ matrix.arch }}.tar
           path: donggu-${{ matrix.os }}-${{ matrix.arch }}.tar
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    name: Create release
+    needs: build_release
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          path: action-artifacts
+      - name: Merge artifacts
+        run: mkdir artifacts; for folder in $(ls action-artifacts); do mv action-artifacts/$folder/* artifacts; done
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "artifacts/*"
