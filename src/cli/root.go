@@ -18,6 +18,7 @@ func init() {
 	rootCmd.AddCommand(initMergeCommand())
 	rootCmd.AddCommand(initFormatCommand())
 	rootCmd.AddCommand(initDiffCommand())
+	rootCmd.AddCommand(initInitCommand())
 }
 
 func Execute() {
