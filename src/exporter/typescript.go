@@ -1,13 +1,16 @@
 package exporter
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"regexp"
+	"strings"
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
+	"github.com/maasasia/donggu/util"
 	"github.com/pkg/errors"
 )
 
@@ -19,9 +22,9 @@ func (t TypescriptDictionaryExporter) Export(
 	projectRoot string,
 	content dictionary.ContentRepresentation,
 	metadata dictionary.Metadata,
-	_ OptionMap,
+	options OptionMap,
 ) error {
-	if err := t.prepareProject(projectRoot); err != nil {
+	if err := t.prepareProject(projectRoot, metadata, options); err != nil {
 		return errors.Wrap(err, "failed to prepare project")
 	}
 
@@ -40,21 +43,39 @@ func (t TypescriptDictionaryExporter) Export(
 	return nil
 }
 
-func (t TypescriptDictionaryExporter) prepareProject(projectRoot string) error {
+func (t TypescriptDictionaryExporter) prepareProject(projectRoot string, metadata dictionary.Metadata, options OptionMap) error {
 	if err := os.RemoveAll(projectRoot); err != nil {
 		return err
 	}
 
-	skipRegex := regexp.MustCompile("(dist|node_modules|generated)")
+	skipRegex := regexp.MustCompile("(dist|node_module|generated)")
 	skipFunc := func(src string) (bool, error) {
 		return skipRegex.MatchString(src), nil
 	}
 	if err := code.CopyTemplateTo("typescript", projectRoot, code.CopyTemplateOptions{Skip: skipFunc}); err != nil {
-		return err
+		return errors.Wrap(err, "failed to prepare export project")
 	}
-	return os.Mkdir(path.Join(projectRoot, "generated"), fs.ModePerm)
+	if err := os.Mkdir(path.Join(projectRoot, "generated"), fs.ModePerm); err != nil {
+		return errors.Wrap(err, "failed to create generated folder")
+	}
+	replaceErr := util.MultiReplaceFile(path.Join(projectRoot, "package.json"), []util.ReplaceSet{
+		{From: regexp.MustCompile("donggu-template-ts"), To: options["packageName"].(string)},
+		{From: regexp.MustCompile(`"version": "1.0.0"`), To: fmt.Sprintf(`"version": "%s"`, metadata.Version)},
+	})
+	if replaceErr != nil {
+		return errors.Wrap(replaceErr, "failed to edit package.json")
+	}
+	return nil
 }
 
 func (t TypescriptDictionaryExporter) ValidateOptions(options OptionMap) error {
+	convOpts := map[string]interface{}(options)
+	if packageName, err := util.SafeAccessMap[string](&convOpts, "packageName"); err == nil {
+		if strings.TrimSpace(packageName) == "" {
+			return errors.New("package name (key 'packageName') should not be empty")
+		}
+	} else {
+		return err
+	}
 	return nil
 }
