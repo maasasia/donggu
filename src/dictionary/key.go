@@ -16,6 +16,15 @@ func (e EntryKey) NewChild(childName string) EntryKey {
 	}
 }
 
+func (e EntryKey) Parent() EntryKey {
+	lastIndex := strings.LastIndex(string(e), ".")
+	if lastIndex == -1 {
+		return ""
+	} else {
+		return e[:lastIndex]
+	}
+}
+
 func (e EntryKey) LastPart() string {
 	return string(e[strings.LastIndex(string(e), ".")+1:])
 }

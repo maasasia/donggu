@@ -36,6 +36,14 @@ func TemplateKeyToCamelCase(fullKey string) string {
 	return lowerFirst(strings.Join(parts, ""))
 }
 
+func TemplateKeyToPascalCase(fullKey string) string {
+	parts := strings.Split(strings.ToLower(fullKey), "_")
+	for j := range parts {
+		parts[j] = upperFirst(parts[j])
+	}
+	return strings.Join(parts, "")
+}
+
 func upperFirst(s string) string {
 	if s == "" {
 		return ""

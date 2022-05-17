@@ -22,6 +22,7 @@ var fileExporters = map[string]exporter.DictionaryFileExporter{
 
 var projectExporters = map[string]exporter.DictionaryProjectExporter{
 	"typescript": exporter.TypescriptDictionaryExporter{},
+	"golang":     exporter.GolangDictionaryExporter{},
 }
 
 func loadImporter(name string) importer.DictionaryImporter {
@@ -35,7 +36,6 @@ func loadImporter(name string) importer.DictionaryImporter {
 
 func loadFileImporter(name string) importer.DictionaryFileImporter {
 	importer, isImporter := fileImporters[name]
-
 	if isImporter {
 		return importer
 	}
@@ -44,7 +44,6 @@ func loadFileImporter(name string) importer.DictionaryFileImporter {
 
 func loadFileExporter(name string) exporter.DictionaryFileExporter {
 	fileExporter, isFileExporter := fileExporters[name]
-
 	if isFileExporter {
 		return fileExporter
 	}
