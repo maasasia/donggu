@@ -31,7 +31,7 @@ func execMergeCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	content = dictionary.MergeContent(mergeContent, content)
-	exportErr := exporter.JsonDictionaryExporter{}.Export(projectRoot, content, meta)
+	exportErr := exporter.JsonDictionaryExporter{}.Export(projectRoot, content, meta, exporter.OptionMap{})
 	if exportErr != nil {
 		return errors.Wrap(err, "failed to save merged file")
 	}
@@ -40,7 +40,7 @@ func execMergeCommand(cmd *cobra.Command, args []string) error {
 
 func initMergeCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "merge [format] [file]",
+		Use:   "merge format file",
 		Short: "Merge a content file to the current project",
 		Args:  cobra.ExactArgs(2),
 		Run:   wrapExecCommand(execMergeCommand),

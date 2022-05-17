@@ -9,6 +9,7 @@ type Metadata struct {
 	Version            string
 	RequiredLanguages  []string
 	SupportedLanguages []string
+	ExporterOptions    map[string]map[string]interface{}
 }
 
 func (m Metadata) SupportedLanguageSet() map[string]struct{} {
@@ -25,6 +26,14 @@ func (m Metadata) RequiredLanguageSet() map[string]struct{} {
 		requiredLangSet[lang] = struct{}{}
 	}
 	return requiredLangSet
+}
+
+func (m Metadata) ExporterOption(exporterName string) map[string]interface{} {
+	if opt, ok := m.ExporterOptions[exporterName]; ok {
+		return opt
+	} else {
+		return map[string]interface{}{}
+	}
 }
 
 func (m Metadata) Validate() (err *multierror.Error) {

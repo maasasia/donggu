@@ -20,19 +20,27 @@ func execExportCommand(cmd *cobra.Command, args []string) error {
 		return errors.Wrapf(err, "invalid target path '%s'", targetRoot)
 	}
 
+	exporterOptions := meta.ExporterOption(exporterName)
 	if exporter := loadProjectExporter(exporterName); exporter != nil {
-		err := exporter.Export(targetRoot, content, meta)
+		if err := exporter.ValidateOptions(exporterOptions); err != nil {
+			return errors.Wrap(err, "invalid options")
+		}
+		err := exporter.Export(targetRoot, content, meta, exporterOptions)
 		if err != nil {
 			return errors.Wrap(err, "failed to export project")
 		}
 	} else if exporter := loadFileExporter(exporterName); exporter != nil {
+		if err := exporter.ValidateOptions(exporterOptions); err != nil {
+			return errors.Wrap(err, "invalid options")
+		}
+
 		file, err := os.OpenFile(targetRoot, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 		if err != nil {
 			return errors.Wrap(err, "failed to open target file")
 		}
 		defer file.Close()
 
-		err = exporter.ExportContent(file, content, meta)
+		err = exporter.ExportContent(file, content, meta, exporterOptions)
 		if err != nil {
 			return errors.Wrap(err, "failed to export project")
 		}
@@ -44,7 +52,7 @@ func execExportCommand(cmd *cobra.Command, args []string) error {
 
 func initExportCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "export [format] [path]",
+		Use:   "export format path",
 		Short: "Export something",
 		Args:  cobra.ExactArgs(2),
 		Run:   wrapExecCommand(execExportCommand),

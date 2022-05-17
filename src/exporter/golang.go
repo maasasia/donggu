@@ -16,6 +16,7 @@ func (g GolangDictionaryExporter) Export(
 	projectRoot string,
 	content dictionary.ContentRepresentation,
 	metadata dictionary.Metadata,
+	_ OptionMap,
 ) error {
 	if err := g.prepareProject(projectRoot); err != nil {
 		return errors.Wrap(err, "failed to prepare project")
@@ -37,5 +38,9 @@ func (g GolangDictionaryExporter) prepareProject(projectRoot string) error {
 	if err := code.CopyTemplateTo("golang", projectRoot, code.CopyTemplateOptions{}); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (g GolangDictionaryExporter) ValidateOptions(options OptionMap) error {
 	return nil
 }

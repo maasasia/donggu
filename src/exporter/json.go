@@ -17,6 +17,7 @@ func (j JsonDictionaryExporter) Export(
 	projectRoot string,
 	content dictionary.ContentRepresentation,
 	metadata dictionary.Metadata,
+	options OptionMap,
 ) error {
 	metadataFilePath := path.Join(projectRoot, "metadata.json")
 	contentFilePath := path.Join(projectRoot, "content.json")
@@ -33,10 +34,10 @@ func (j JsonDictionaryExporter) Export(
 	}
 	defer contentFile.Close()
 
-	if err := j.ExportMetadata(metadataFile, metadata); err != nil {
+	if err := j.ExportMetadata(metadataFile, metadata, options); err != nil {
 		return errors.Wrapf(err, "failed to write metadata")
 	}
-	if err := j.ExportContent(contentFile, content, metadata); err != nil {
+	if err := j.ExportContent(contentFile, content, metadata, options); err != nil {
 		return errors.Wrapf(err, "failed to write content")
 	}
 	return nil
@@ -46,6 +47,7 @@ func (j JsonDictionaryExporter) ExportContent(
 	file io.Writer,
 	content dictionary.ContentRepresentation,
 	_ dictionary.Metadata,
+	_ OptionMap,
 ) error {
 	flattened := content.ToFlattened()
 
@@ -57,7 +59,7 @@ func (j JsonDictionaryExporter) ExportContent(
 	return nil
 }
 
-func (j JsonDictionaryExporter) ExportMetadata(file io.Writer, metadata dictionary.Metadata) error {
+func (j JsonDictionaryExporter) ExportMetadata(file io.Writer, metadata dictionary.Metadata, _ OptionMap) error {
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 
@@ -65,10 +67,15 @@ func (j JsonDictionaryExporter) ExportMetadata(file io.Writer, metadata dictiona
 		"version":             metadata.Version,
 		"required_languages":  metadata.RequiredLanguages,
 		"supported_languages": metadata.SupportedLanguages,
+		"exporter_options":    metadata.ExporterOptions,
 	}
 
 	if err := encoder.Encode(jsonObj); err != nil {
 		return errors.Wrap(err, "failed to encode JSON")
 	}
+	return nil
+}
+
+func (j JsonDictionaryExporter) ValidateOptions(options OptionMap) error {
 	return nil
 }

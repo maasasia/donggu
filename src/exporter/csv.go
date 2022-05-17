@@ -16,6 +16,7 @@ func (c CsvDictionaryExporter) ExportContent(
 	file io.Writer,
 	content dictionary.ContentRepresentation,
 	metadata dictionary.Metadata,
+	_ OptionMap,
 ) error {
 	flattened := content.ToFlattened()
 
@@ -52,6 +53,10 @@ func (c CsvDictionaryExporter) ExportContent(
 	return nil
 }
 
-func (c CsvDictionaryExporter) ExportMetadata(file io.Writer, metadata dictionary.Metadata) error {
+func (c CsvDictionaryExporter) ExportMetadata(file io.Writer, metadata dictionary.Metadata, _ OptionMap) error {
 	return errors.New("unsupported")
+}
+
+func (c CsvDictionaryExporter) ValidateOptions(options OptionMap) error {
+	return nil
 }

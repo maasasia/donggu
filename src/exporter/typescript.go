@@ -19,6 +19,7 @@ func (t TypescriptDictionaryExporter) Export(
 	projectRoot string,
 	content dictionary.ContentRepresentation,
 	metadata dictionary.Metadata,
+	_ OptionMap,
 ) error {
 	if err := t.prepareProject(projectRoot); err != nil {
 		return errors.Wrap(err, "failed to prepare project")
@@ -52,4 +53,8 @@ func (t TypescriptDictionaryExporter) prepareProject(projectRoot string) error {
 		return err
 	}
 	return os.Mkdir(path.Join(projectRoot, "generated"), fs.ModePerm)
+}
+
+func (t TypescriptDictionaryExporter) ValidateOptions(options OptionMap) error {
+	return nil
 }

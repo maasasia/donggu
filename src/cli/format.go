@@ -15,7 +15,7 @@ func execFormatCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to load project")
 	}
-	exportErr := exporter.JsonDictionaryExporter{}.Export(projectRoot, content, meta)
+	exportErr := exporter.JsonDictionaryExporter{}.Export(projectRoot, content, meta, exporter.OptionMap{})
 	if exportErr != nil {
 		return errors.Wrap(err, "failed to save file")
 	}
@@ -24,7 +24,7 @@ func execFormatCommand(cmd *cobra.Command, _ []string) error {
 
 func initFormatCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:     "fmt [format] [file]",
+		Use:     "fmt format file",
 		Aliases: []string{"format"},
 		Short:   "Format content and metadata file",
 		Run:     wrapExecCommand(execFormatCommand),
