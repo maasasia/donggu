@@ -1,9 +1,17 @@
 package generated
 
+import (
+	"fmt"
+)
+
 type ResolverFunc func(query func(lang string) bool) string
 
 type Donggu struct {
-	Resolver ResolverFunc
+	resolver ResolverFunc
+}
+
+func InternalNewDonggu(resolver ResolverFunc) *Donggu {
+	return &Donggu{resolver: resolver}
 }
 
 func (d Donggu) resolve(key string) interface{} {
@@ -11,7 +19,14 @@ func (d Donggu) resolve(key string) interface{} {
 	if !ok {
 		return nil
 	}
-	return dd["ko"]
+	chosenLang := d.resolver(func(lang string) bool {
+		_, langExists := dd[lang]
+		return langExists
+	})
+	if !IsValidLanguage(chosenLang) {
+		panic(fmt.Errorf("language '%s' provided by resolver is invalid", chosenLang))
+	}
+	return dd[chosenLang]
 }
 
 func IsValidLanguage(language string) bool {
