@@ -31,8 +31,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '1.18'
-      - run: mkdir out
-      - run: cp -r templates out/templates
+      - run: mkdir out && cp -r templates out/templates
       - name: Build
         run: cd src && go build -o ../out . 
         env:
@@ -40,3 +39,8 @@ jobs:
           GOOS: ${{ matrix.os }}
       - name: Create tar
         run: cd out && tar cvf ../donggu-${{ matrix.os }}-${{ matrix.arch }}.tar *
+      - name: Upload artifact 
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ matrix.os }}-${{ matrix.arch }}
+          path: donggu-${{ matrix.os }}-${{ matrix.arch }}.tar
