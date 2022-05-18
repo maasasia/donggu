@@ -46,9 +46,9 @@ func (t typescriptArgumentFormatter) Format(key string, format dictionary.Templa
 func (t typescriptArgumentFormatter) formatBool(key string, format dictionary.TemplateKeyFormat) string {
 	options := format.Option.(dictionary.BoolTemplateFormatOption)
 	if options.UseLocaleValues {
-		return fmt.Sprintf("param.%s ? `%s` : `%s`", key, options.TrueValue, options.FalseValue)
-	} else {
 		return fmt.Sprintf("Formatter.bool(param.%s)", key)
+	} else {
+		return fmt.Sprintf("param.%s ? `%s` : `%s`", key, options.TrueValue, options.FalseValue)
 	}
 }
 
