@@ -7,7 +7,7 @@ import (
 	"github.com/maasasia/donggu/dictionary"
 )
 
-type typescriptTemplateFormatter struct{}
+type typescriptArgumentFormatter struct{}
 
 type typescriptNumericFormatJsonMarshal struct {
 	PadCharacter   string `json:"padCharacter"`
@@ -17,7 +17,7 @@ type typescriptNumericFormatJsonMarshal struct {
 	AlwaysAddSign  bool   `json:"alwaysSign"`
 }
 
-func (t typescriptTemplateFormatter) ArgumentType(format dictionary.TemplateKeyFormat) string {
+func (t typescriptArgumentFormatter) ArgumentType(format dictionary.TemplateKeyFormat) string {
 	switch format.Kind {
 	case dictionary.FloatTemplateKeyType:
 		fallthrough
@@ -30,7 +30,7 @@ func (t typescriptTemplateFormatter) ArgumentType(format dictionary.TemplateKeyF
 	}
 }
 
-func (t typescriptTemplateFormatter) Format(key string, format dictionary.TemplateKeyFormat) string {
+func (t typescriptArgumentFormatter) Format(key string, format dictionary.TemplateKeyFormat) string {
 	switch format.Kind {
 	case dictionary.FloatTemplateKeyType:
 		return fmt.Sprintf("Formatter.float(param.%s, %s)", key, t.numericOptions(key, format))
@@ -43,7 +43,7 @@ func (t typescriptTemplateFormatter) Format(key string, format dictionary.Templa
 	}
 }
 
-func (t typescriptTemplateFormatter) formatBool(key string, format dictionary.TemplateKeyFormat) string {
+func (t typescriptArgumentFormatter) formatBool(key string, format dictionary.TemplateKeyFormat) string {
 	options := format.Option.(dictionary.BoolTemplateFormatOption)
 	if options.UseLocaleValues {
 		return fmt.Sprintf("param.%s ? `%s` : `%s`", key, options.TrueValue, options.FalseValue)
@@ -52,7 +52,7 @@ func (t typescriptTemplateFormatter) formatBool(key string, format dictionary.Te
 	}
 }
 
-func (t typescriptTemplateFormatter) numericOptions(key string, format dictionary.TemplateKeyFormat) string {
+func (t typescriptArgumentFormatter) numericOptions(key string, format dictionary.TemplateKeyFormat) string {
 	options := format.Option.(dictionary.NumericTemplateFormatOption)
 	if options.IsZero() {
 		return "{}"

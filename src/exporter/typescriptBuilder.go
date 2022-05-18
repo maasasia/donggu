@@ -106,7 +106,7 @@ func (t *typescriptBuilder) addEntry(entry dictionary.Entry, entryKey dictionary
 		interfaceName = t.argsInterfaceName(entryKey)
 		tsArgTypes := map[string]string{}
 		for k, v := range templateKeys {
-			argType := typescriptTemplateFormatter{}.ArgumentType(v)
+			argType := typescriptArgumentFormatter{}.ArgumentType(v)
 			tsArgTypes[code.TemplateKeyToCamelCase(k)] = argType
 		}
 		t.AddArgType(interfaceName, tsArgTypes)
@@ -175,7 +175,7 @@ func (t *typescriptBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey,
 			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", lang, value))
 		} else {
 			templateString := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
-				call := typescriptTemplateFormatter{}.Format(key, format)
+				call := typescriptArgumentFormatter{}.Format(key, format)
 				return "${" + call + "}"
 			})
 			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", lang, argType, templateString))
