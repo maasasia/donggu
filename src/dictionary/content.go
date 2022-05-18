@@ -11,7 +11,7 @@ import (
 
 const (
 	TemplateParenPattern  = "#{(.*?)}"
-	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool))?}`
+	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool)(?:\|(.*?))?)}`
 )
 
 var templateParenRegex = regexp.MustCompile(TemplateParenPattern)
@@ -27,12 +27,6 @@ type ContentRepresentation interface {
 	Validate(metadata Metadata, options ContentValidationOptions) *multierror.Error
 }
 
-type TemplateKeyFormat string
-
-func (t TemplateKeyFormat) Compatible(other TemplateKeyFormat) bool {
-	return t == other
-}
-
 type Entry map[string]string
 
 func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
@@ -46,7 +40,11 @@ func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
 		if _, exists := templates[groups[1]]; exists {
 			return map[string]TemplateKeyFormat{}, errors.Errorf("duplicate template key '%s'", groups[1])
 		}
-		templates[groups[1]] = e.resolveKeyFormat(groups[2])
+		keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
+		if err != nil {
+			return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
+		}
+		templates[groups[1]] = keyFormat
 	}
 	return templates, nil
 }
@@ -55,16 +53,9 @@ func (e Entry) ReplacedTemplateValue(key string, replaceFn func(string, Template
 	return templateParenRegex.ReplaceAllStringFunc(e[key], func(from string) string {
 		itemMatch := templateOptionRegex.FindAllStringSubmatch(from, -1)
 		groups := itemMatch[0]
-		return replaceFn(groups[1], e.resolveKeyFormat(groups[2]))
+		keyFormat, _ := ParseTemplateKeyFormat(groups[2], groups[3])
+		return replaceFn(groups[1], keyFormat)
 	})
-}
-
-func (e Entry) resolveKeyFormat(rawFormat string) TemplateKeyFormat {
-	if rawFormat == "" {
-		return "string"
-	} else {
-		return TemplateKeyFormat(rawFormat)
-	}
 }
 
 func (e Entry) String() string {

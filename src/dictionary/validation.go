@@ -30,7 +30,7 @@ func NewContentValidator(m Metadata, options ContentValidationOptions) ContentVa
 		supportedLangSet:  map[string]struct{}{},
 		requiredLangSet:   map[string]struct{}{},
 		templateRegex:     regexp.MustCompile("#{(.*?)}"),
-		templateItemRegex: regexp.MustCompile(`#{([A-Z0-9_]+)(?:\|(string|int|float|bool))?}`),
+		templateItemRegex: regexp.MustCompile(`#{([A-Z0-9_]+)(?:\|(string|int|float|bool))?(?:\|(.*?))?}`),
 	}
 	for _, lang := range m.RequiredLanguages {
 		validator.requiredLangSet[lang] = struct{}{}
