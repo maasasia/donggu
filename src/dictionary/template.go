@@ -39,6 +39,10 @@ type NumericTemplateFormatOption struct {
 	AlwaysAddSign  bool
 }
 
+func (n NumericTemplateFormatOption) IsZero() bool {
+	return !n.WidthSet && !n.PrecisionSet && !n.CommaSeparator && !n.AlwaysAddSign
+}
+
 type BoolTemplateFormatOption struct {
 	UseLocaleValues bool
 	TrueValue       string

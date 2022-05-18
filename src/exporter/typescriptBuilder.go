@@ -106,7 +106,8 @@ func (t *typescriptBuilder) addEntry(entry dictionary.Entry, entryKey dictionary
 		interfaceName = t.argsInterfaceName(entryKey)
 		tsArgTypes := map[string]string{}
 		for k, v := range templateKeys {
-			tsArgTypes[code.TemplateKeyToCamelCase(k)] = t.resolveArgumentType(v)
+			argType := typescriptTemplateFormatter{}.ArgumentType(v)
+			tsArgTypes[code.TemplateKeyToCamelCase(k)] = argType
 		}
 		t.AddArgType(interfaceName, tsArgTypes)
 	}
@@ -174,27 +175,14 @@ func (t *typescriptBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey,
 			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", lang, value))
 		} else {
 			templateString := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
-				return "${" + t.templateFormatterCall(key, format) + "}"
+				call := typescriptTemplateFormatter{}.Format(key, format)
+				return "${" + call + "}"
 			})
 			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", lang, argType, templateString))
 		}
 	}
 	t.dataBuilder.Unindent()
 	t.dataBuilder.AppendLines("},")
-}
-
-func (t typescriptBuilder) templateFormatterCall(key string, format dictionary.TemplateKeyFormat) string {
-	key = code.TemplateKeyToCamelCase(key)
-	switch format {
-	case "int":
-		return fmt.Sprintf("Formatter.int(param.%s)", key)
-	case "float":
-		return fmt.Sprintf("Formatter.float(param.%s)", key)
-	case "bool":
-		return fmt.Sprintf("Formatter.bool(param.%s)", key)
-	default:
-		return fmt.Sprintf("param.%s", key)
-	}
 }
 
 func (t *typescriptBuilder) Build(metadata dictionary.Metadata, w io.Writer) {
@@ -237,17 +225,4 @@ func (t typescriptBuilder) nodeInterfaceName(key dictionary.EntryKey) string {
 
 func (t typescriptBuilder) nodeImplName(key dictionary.EntryKey) string {
 	return t.nodeInterfaceName(key) + "_Impl"
-}
-
-func (t typescriptBuilder) resolveArgumentType(argType dictionary.TemplateKeyFormat) string {
-	switch argType {
-	case "int":
-		fallthrough
-	case "float":
-		return "number"
-	case "bool":
-		return "boolean"
-	default:
-		return "string"
-	}
 }
