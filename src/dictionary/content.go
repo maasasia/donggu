@@ -11,7 +11,7 @@ import (
 
 const (
 	TemplateParenPattern  = "#{(.*?)}"
-	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool)(?:\|(.*?))?)}`
+	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool)(?:\|(.*?))?)?}`
 )
 
 var templateParenRegex = regexp.MustCompile(TemplateParenPattern)
@@ -40,11 +40,16 @@ func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
 		if _, exists := templates[groups[1]]; exists {
 			return map[string]TemplateKeyFormat{}, errors.Errorf("duplicate template key '%s'", groups[1])
 		}
-		keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
-		if err != nil {
-			return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
+		if groups[2] == "" {
+			templates[groups[1]] = TemplateKeyFormat{Kind: StringTemplateKeyType}
+		} else {
+			keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
+			if err != nil {
+				return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
+			}
+			templates[groups[1]] = keyFormat
 		}
-		templates[groups[1]] = keyFormat
+
 	}
 	return templates, nil
 }

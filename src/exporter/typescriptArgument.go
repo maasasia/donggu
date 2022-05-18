@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
 )
 
 type typescriptArgumentFormatter struct{}
 
 type typescriptNumericFormatJsonMarshal struct {
-	PadCharacter   string `json:"padCharacter"`
-	Width          *int   `json:"width"`
-	Precision      *int   `json:"precision"`
-	CommaSeparator bool   `json:"comma"`
-	AlwaysAddSign  bool   `json:"alwaysSign"`
+	PadCharacter   *string `json:"padCharacter"`
+	Width          *int    `json:"width"`
+	Precision      *int    `json:"precision"`
+	CommaSeparator bool    `json:"comma"`
+	AlwaysAddSign  bool    `json:"alwaysSign"`
 }
 
 func (t typescriptArgumentFormatter) ArgumentType(format dictionary.TemplateKeyFormat) string {
@@ -31,6 +32,7 @@ func (t typescriptArgumentFormatter) ArgumentType(format dictionary.TemplateKeyF
 }
 
 func (t typescriptArgumentFormatter) Format(key string, format dictionary.TemplateKeyFormat) string {
+	key = code.TemplateKeyToCamelCase(key)
 	switch format.Kind {
 	case dictionary.FloatTemplateKeyType:
 		return fmt.Sprintf("Formatter.float(param.%s, %s)", key, t.numericOptions(key, format))
@@ -55,14 +57,22 @@ func (t typescriptArgumentFormatter) formatBool(key string, format dictionary.Te
 func (t typescriptArgumentFormatter) numericOptions(key string, format dictionary.TemplateKeyFormat) string {
 	options := format.Option.(dictionary.NumericTemplateFormatOption)
 	if options.IsZero() {
-		return "{}"
+		return "null"
 	}
 	optionMarshal := typescriptNumericFormatJsonMarshal{
-		PadCharacter:   options.PadCharacter,
+		PadCharacter:   nil,
 		CommaSeparator: options.CommaSeparator,
 		AlwaysAddSign:  options.AlwaysAddSign,
 		Width:          nil,
 		Precision:      nil,
+	}
+	if options.WidthSet || options.PadCharacter == "0" {
+		optionMarshal.PadCharacter = new(string)
+		if options.PadCharacter == "0" {
+			*optionMarshal.PadCharacter = "0"
+		} else {
+			*optionMarshal.PadCharacter = " "
+		}
 	}
 	if options.WidthSet {
 		optionMarshal.Width = new(int)
