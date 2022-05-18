@@ -1,6 +1,7 @@
 package dictionary
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -59,12 +60,13 @@ func (c ContentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 			return
 		}
 		_, isSupportedLang := c.supportedLangSet[key]
-		if !c.options.SkipLangSupportCheck && !(isSupportedLang || key == "context") {
-			err = errors.Errorf("language '%s' is not in supported languages", key)
-			return
-		}
-		if !isSupportedLang {
-			continue
+		if !(isSupportedLang || key == "context") {
+			if c.options.SkipLangSupportCheck {
+				fmt.Printf("unsupported language '%s'\n", key)
+			} else {
+				err = errors.Errorf("language '%s' is not in supported languages", key)
+				return
+			}
 		}
 		langTemplateKeys, contentErr := entry.TemplateKeys(key)
 		if contentErr != nil {

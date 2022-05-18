@@ -39,6 +39,14 @@ func (m Metadata) ExporterOption(exporterName string) map[string]interface{} {
 func (m Metadata) Validate() (err *multierror.Error) {
 	supportedLangSet := map[string]struct{}{}
 	requiredLangSet := map[string]struct{}{}
+
+	if len(m.SupportedLanguages) == 0 {
+		err = multierror.Append(err, errors.Errorf("supported languages is empty"))
+	}
+	if len(m.RequiredLanguages) == 0 {
+		err = multierror.Append(err, errors.Errorf("required langauges is empty"))
+	}
+
 	for _, lang := range m.SupportedLanguages {
 		if _, ok := supportedLangSet[lang]; ok {
 			err = multierror.Append(err, errors.Errorf("duplicate language '%s' in SupportedLanguages", lang))

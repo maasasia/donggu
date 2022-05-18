@@ -49,7 +49,6 @@ func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
 			}
 			templates[groups[1]] = keyFormat
 		}
-
 	}
 	return templates, nil
 }
