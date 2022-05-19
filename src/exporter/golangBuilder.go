@@ -137,7 +137,7 @@ func (g *golangBuilder) buildEntryArgumentBlock(argTypes map[string]dictionary.T
 	callArgs = make([]jen.Code, 0, len(argTypes))
 	paramArgs = make([]jen.Code, 0, len(argTypes))
 	for k, v := range argTypes {
-		callArg, paramArg := g.resolveEntryArgumentParam(code.TemplateKeyToCamelCase(k), v)
+		callArg, paramArg := golangArgumentFormatter{}.ArgumentType(code.TemplateKeyToCamelCase(k), v)
 		callArgs = append(callArgs, callArg)
 		paramArgs = append(paramArgs, paramArg)
 	}
@@ -163,7 +163,7 @@ func (g *golangBuilder) buildFormatterReturnValue(
 ) *jen.Statement {
 	params := make([]jen.Code, 1)
 	templateString := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
-		formatString, argValue := g.templateFormatterCall(key, format)
+		formatString, argValue := golangArgumentFormatter{}.Format(key, format)
 		params = append(params, argValue)
 		return formatString
 	})
@@ -173,34 +173,4 @@ func (g *golangBuilder) buildFormatterReturnValue(
 		params[0] = jen.Lit(templateString)
 		return jen.Qual("fmt", "Sprintf").Call(params...)
 	}
-}
-
-func (g golangBuilder) templateFormatterCall(key string, templateKeys dictionary.TemplateKeyFormat) (formatString string, arg jen.Code) {
-	key = code.TemplateKeyToCamelCase(key)
-	switch templateKeys {
-	case "int":
-		return "%d", jen.Id(key)
-	case "float":
-		return "%f", jen.Id(key)
-	case "bool":
-		// TODO: Change
-		return "%s", jen.Id(key)
-	default:
-		return "%s", jen.Id(key)
-	}
-}
-
-func (g *golangBuilder) resolveEntryArgumentParam(key string, argType dictionary.TemplateKeyFormat) (callArg, paramArg *jen.Statement) {
-	callArg = jen.Id(key)
-	switch argType {
-	case "int":
-		paramArg = callArg.Clone().Int()
-	case "float":
-		paramArg = callArg.Clone().Float32()
-	case "bool":
-		paramArg = callArg.Clone().Bool()
-	default:
-		paramArg = callArg.Clone().String()
-	}
-	return
 }

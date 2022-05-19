@@ -38,3 +38,11 @@ func IsRequiredLanguage(language string) bool {
 	lang, ok := languages[language]
 	return ok && lang.bool
 }
+
+func printBooleanValue(value bool, trueValue, falseValue string) string {
+	if value {
+		return trueValue
+	} else {
+		return falseValue
+	}
+}

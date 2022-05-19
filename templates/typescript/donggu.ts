@@ -4,10 +4,9 @@ export type FallbackOrderFn = (wanted?: Language) => [...Language[], RequiredLan
 
 export class Donggu extends _MDict_Impl {
     constructor(private readonly getFallbackOrder: FallbackOrderFn) {
-        const cb = (key: keyof typeof DATA, options: unknown, language?: Language) => {
+        super((key: keyof typeof DATA, options: unknown, language?: Language) => {
             return this.resolve(key, options, language);
-        };
-        super(cb);
+        });
     }
 
     public get version(): string {
