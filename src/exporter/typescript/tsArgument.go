@@ -1,4 +1,4 @@
-package exporter
+package typescript
 
 import (
 	"encoding/json"

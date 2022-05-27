@@ -15,11 +15,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TypescriptDictionaryExporter is a DictionaryProjectExporter
-// generating a Typescript package for using the dictionary.
-type TypescriptDictionaryExporter struct{}
+// TypescriptReactDictionaryExporter is a DictionaryProjectExporter
+// generating a Typescript React package for using the dictionary.
+type TypescriptReactDictionaryExporter struct{}
 
-func (t TypescriptDictionaryExporter) Export(
+func (t TypescriptReactDictionaryExporter) Export(
 	projectRoot string,
 	content dictionary.ContentRepresentation,
 	metadata dictionary.Metadata,
@@ -29,12 +29,12 @@ func (t TypescriptDictionaryExporter) Export(
 		return errors.Wrap(err, "failed to prepare project")
 	}
 
-	builder := typescript.NewTypescriptBuilder(metadata, typescript.TypescriptBuilderOptions{})
+	builder := typescript.NewTypescriptBuilder(metadata, typescript.ReactBuilderOptions{})
 	if err := builder.Run(content.ToTree()); err != nil {
 		return err
 	}
 
-	file, err := os.OpenFile(path.Join(projectRoot, "generated/dictionary.ts"), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0755)
+	file, err := os.OpenFile(path.Join(projectRoot, "generated/dictionary.tsx"), os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0755)
 	if err != nil {
 		return errors.Wrap(err, "failed to open file")
 	}
@@ -44,7 +44,7 @@ func (t TypescriptDictionaryExporter) Export(
 	return nil
 }
 
-func (t TypescriptDictionaryExporter) prepareProject(projectRoot string, metadata dictionary.Metadata, options OptionMap) error {
+func (t TypescriptReactDictionaryExporter) prepareProject(projectRoot string, metadata dictionary.Metadata, options OptionMap) error {
 	if err := os.RemoveAll(projectRoot); err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (t TypescriptDictionaryExporter) prepareProject(projectRoot string, metadat
 	skipFunc := func(src string) (bool, error) {
 		return skipRegex.MatchString(src), nil
 	}
-	if err := code.CopyTemplateTo("typescript", projectRoot, code.CopyTemplateOptions{Skip: skipFunc}); err != nil {
+	if err := code.CopyTemplateTo("ts-react", projectRoot, code.CopyTemplateOptions{Skip: skipFunc}); err != nil {
 		return errors.Wrap(err, "failed to prepare export project")
 	}
 	if err := os.Mkdir(path.Join(projectRoot, "generated"), fs.ModePerm); err != nil {
@@ -70,7 +70,7 @@ func (t TypescriptDictionaryExporter) prepareProject(projectRoot string, metadat
 	return nil
 }
 
-func (t TypescriptDictionaryExporter) ValidateOptions(options OptionMap) error {
+func (t TypescriptReactDictionaryExporter) ValidateOptions(options OptionMap) error {
 	convOpts := map[string]interface{}(options)
 	if packageName, err := util.SafeAccessMap[string](&convOpts, "packageName"); err == nil {
 		if strings.TrimSpace(packageName) == "" {
