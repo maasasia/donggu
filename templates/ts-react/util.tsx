@@ -21,7 +21,7 @@ export const Formatter = {
         return useWrapper(text, Wrap);
     },
     string: (v: string, Wrap?: React.ComponentType<{children: React.ReactNode}>) => {
-        return useWrapper(v);
+        return useWrapper(v, Wrap);
     },
     bool: (v: boolean) => {
         return useWrapper(v ? 'yes' : 'no');
