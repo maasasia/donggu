@@ -22,6 +22,7 @@ var fileExporters = map[string]exporter.DictionaryFileExporter{
 
 var projectExporters = map[string]exporter.DictionaryProjectExporter{
 	"typescript": exporter.TypescriptDictionaryExporter{},
+	"ts-react":   exporter.TypescriptReactDictionaryExporter{},
 	"golang":     exporter.GolangDictionaryExporter{},
 }
 
