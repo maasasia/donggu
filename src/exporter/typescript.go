@@ -10,6 +10,7 @@ import (
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
+	"github.com/maasasia/donggu/exporter/typescript"
 	"github.com/maasasia/donggu/util"
 	"github.com/pkg/errors"
 )
@@ -28,7 +29,7 @@ func (t TypescriptDictionaryExporter) Export(
 		return errors.Wrap(err, "failed to prepare project")
 	}
 
-	builder := newTypescriptBuilder(metadata)
+	builder := typescript.NewTypescriptBuilder(metadata)
 	if err := builder.Run(content.ToTree()); err != nil {
 		return err
 	}
@@ -58,6 +59,7 @@ func (t TypescriptDictionaryExporter) prepareProject(projectRoot string, metadat
 	if err := os.Mkdir(path.Join(projectRoot, "generated"), fs.ModePerm); err != nil {
 		return errors.Wrap(err, "failed to create generated folder")
 	}
+
 	replaceErr := util.MultiReplaceFile(path.Join(projectRoot, "package.json"), []util.ReplaceSet{
 		{From: regexp.MustCompile("donggu-template-ts"), To: options["packageName"].(string)},
 		{From: regexp.MustCompile(`"version": "1.0.0"`), To: fmt.Sprintf(`"version": "%s"`, metadata.Version)},

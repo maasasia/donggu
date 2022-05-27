@@ -1,4 +1,4 @@
-package exporter
+package typescript
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ type typescriptBuilder struct {
 	contentValidator dictionary.ContentValidator
 }
 
-func newTypescriptBuilder(metadata dictionary.Metadata) *typescriptBuilder {
+func NewTypescriptBuilder(metadata dictionary.Metadata) *typescriptBuilder {
 	return &typescriptBuilder{
 		contentValidator: dictionary.NewContentValidator(metadata, dictionary.ContentValidationOptions{
 			SkipLangSupportCheck: true,
