@@ -6,9 +6,14 @@ import (
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
+	"github.com/maasasia/donggu/util"
 )
 
-type TypescriptBuilderOptions struct{}
+type TypescriptBuilderOptions struct{ shortener util.Shortener }
+
+func (t *TypescriptBuilderOptions) SetShortener(shortener util.Shortener) {
+	t.shortener = shortener
+}
 
 func (t TypescriptBuilderOptions) ArgFormatter() ArgumentFormatter {
 	return typescriptArgumentFormatter{}
@@ -36,11 +41,11 @@ func (t TypescriptBuilderOptions) WriteEntryType(builder *code.IndentedCodeBuild
 
 func (t TypescriptBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuilder, methodName, interfaceName string, entryKey dictionary.EntryKey) {
 	if interfaceName == "" {
-		builder.AppendLines(fmt.Sprintf(`%s(language?: Language) { return this.cb("%s", undefined, language) }`, methodName, entryKey))
+		builder.AppendLines(fmt.Sprintf(`%s(language?: Language) { return this.cb("%s", undefined, language) }`, methodName, t.shortener.Shorten(string(entryKey))))
 	} else {
 		builder.AppendLines(
 			fmt.Sprintf(`%s(param: %s, language?: Language) { return this.cb("%s", param, language) }`,
-				methodName, interfaceName, entryKey),
+				methodName, interfaceName, t.shortener.Shorten(string(entryKey))),
 		)
 	}
 }

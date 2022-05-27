@@ -6,9 +6,14 @@ import (
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
+	"github.com/maasasia/donggu/util"
 )
 
-type ReactBuilderOptions struct{}
+type ReactBuilderOptions struct{ shortener util.Shortener }
+
+func (r *ReactBuilderOptions) SetShortener(shortener util.Shortener) {
+	r.shortener = shortener
+}
 
 func (r ReactBuilderOptions) ArgFormatter() ArgumentFormatter {
 	return reactArgumentFormatter{}
@@ -38,11 +43,11 @@ func (t ReactBuilderOptions) WriteEntryType(builder *code.IndentedCodeBuilder, m
 
 func (t ReactBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuilder, methodName, interfaceName string, entryKey dictionary.EntryKey) {
 	if interfaceName == "" {
-		builder.AppendLines(fmt.Sprintf(`%s(options?: EntryOptions) { return this.cb("%s", options) }`, methodName, entryKey))
+		builder.AppendLines(fmt.Sprintf(`%s(options?: EntryOptions) { return this.cb("%s", options) }`, methodName, t.shortener.Shorten(string(entryKey))))
 	} else {
 		builder.AppendLines(
 			fmt.Sprintf(`%s(param: %s, options?: EntryOptions<%s>) { return this.cb("%s", options) }`,
-				methodName, interfaceName, interfaceName, entryKey),
+				methodName, interfaceName, interfaceName, t.shortener.Shorten(string(entryKey))),
 		)
 	}
 }

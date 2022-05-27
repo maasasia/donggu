@@ -29,7 +29,7 @@ func (t TypescriptReactDictionaryExporter) Export(
 		return errors.Wrap(err, "failed to prepare project")
 	}
 
-	builder := typescript.NewTypescriptBuilder(metadata, typescript.ReactBuilderOptions{})
+	builder := typescript.NewTypescriptBuilder(metadata, &typescript.ReactBuilderOptions{})
 	if err := builder.Run(content.ToTree()); err != nil {
 		return err
 	}
