@@ -52,6 +52,7 @@ func (t *typescriptBuilder) walk(contentNode *dictionary.ContentNode, positionKe
 	childPropertyNames := map[string]struct{}{}
 	entryParamInterfaceNames := map[string]string{}
 	entryFullKeys := map[string]dictionary.EntryKey{}
+	entries := map[string]dictionary.Entry{}
 
 	entriesToSkip := map[string]struct{}{}
 
@@ -78,6 +79,7 @@ func (t *typescriptBuilder) walk(contentNode *dictionary.ContentNode, positionKe
 		if err != nil {
 			return err
 		}
+		entries[methodName] = entry
 		entryParamInterfaceNames[methodName] = interfaceName
 		entryFullKeys[methodName] = positionKey.NewChild(key)
 	}
@@ -90,7 +92,7 @@ func (t *typescriptBuilder) walk(contentNode *dictionary.ContentNode, positionKe
 		entryFullKeys[methodName] = positionKey.NewChild("$")
 	}
 
-	t.writeNodeToBuilder(positionKey, &childPropertyNames, &entryParamInterfaceNames, &entryFullKeys)
+	t.writeNodeToBuilder(positionKey, &childPropertyNames, &entryParamInterfaceNames, &entryFullKeys, &entries)
 	return nil
 }
 
@@ -126,7 +128,8 @@ func (t *typescriptBuilder) writeNodeToBuilder(
 	parentKey dictionary.EntryKey,
 	childPropertyNames *map[string]struct{},
 	entryParamInterfaceNames *map[string]string,
-	entryFullKeys *map[string]dictionary.EntryKey) {
+	entryFullKeys *map[string]dictionary.EntryKey,
+	entries *map[string]dictionary.Entry) {
 
 	nodeTypeInterfaceName := t.nodeInterfaceName(parentKey)
 	nodeImplName := t.nodeImplName(parentKey)
@@ -151,6 +154,15 @@ func (t *typescriptBuilder) writeNodeToBuilder(
 	for methodName := range *entryFullKeys {
 		entryKey := (*entryFullKeys)[methodName]
 		interfaceName := (*entryParamInterfaceNames)[methodName]
+
+		t.nodeTypeBuilder.AppendLines(
+			"/**",
+			fmt.Sprintf(" * Text builder method for entry `%s`", entryKey),
+		)
+		for language, template := range (*entries)[methodName] {
+			t.nodeTypeBuilder.AppendLines(fmt.Sprintf(" * - `%s`: `%s`", language, strings.Replace(template, "\n", "\\n", -1)))
+		}
+		t.nodeTypeBuilder.AppendLines(" */")
 
 		t.options.WriteEntryType(&t.nodeTypeBuilder, methodName, interfaceName, entryKey)
 		t.options.WriteEntryImpl(&t.nodeImplBuilder, methodName, interfaceName, entryKey)
