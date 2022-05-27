@@ -12,19 +12,21 @@ import (
 )
 
 type typescriptBuilder struct {
+	options          BuilderOptions
+	contentValidator dictionary.ContentValidator
+
 	dataBuilder     code.IndentedCodeBuilder
 	argTypeBuilder  code.IndentedCodeBuilder
 	nodeTypeBuilder code.IndentedCodeBuilder
 	nodeImplBuilder code.IndentedCodeBuilder
-
-	contentValidator dictionary.ContentValidator
 }
 
-func NewTypescriptBuilder(metadata dictionary.Metadata) *typescriptBuilder {
+func NewTypescriptBuilder(metadata dictionary.Metadata, options BuilderOptions) *typescriptBuilder {
 	return &typescriptBuilder{
 		contentValidator: dictionary.NewContentValidator(metadata, dictionary.ContentValidationOptions{
 			SkipLangSupportCheck: true,
 		}),
+		options: options,
 	}
 }
 
@@ -145,17 +147,9 @@ func (t *typescriptBuilder) writeNodeToBuilder(
 	for methodName := range *entryFullKeys {
 		entryKey := (*entryFullKeys)[methodName]
 		interfaceName := (*entryParamInterfaceNames)[methodName]
-		if interfaceName == "" {
-			// No arguments
-			t.nodeTypeBuilder.AppendLines(fmt.Sprintf("%s: DictionaryNFnItem;", methodName))
-			t.nodeImplBuilder.AppendLines(fmt.Sprintf(`%s(language?: Language) { return this.cb("%s", undefined, language) }`, methodName, entryKey))
-		} else {
-			t.nodeTypeBuilder.AppendLines(fmt.Sprintf("%s: DictionaryFnItem<%s>;", methodName, interfaceName))
-			t.nodeImplBuilder.AppendLines(
-				fmt.Sprintf(`%s(param: %s, language?: Language) { return this.cb("%s", param, language) }`,
-					methodName, interfaceName, entryKey),
-			)
-		}
+
+		t.options.WriteEntryType(&t.nodeTypeBuilder, methodName, interfaceName, entryKey)
+		t.options.WriteEntryImpl(&t.nodeImplBuilder, methodName, interfaceName, entryKey)
 	}
 
 	t.nodeTypeBuilder.Unindent()
@@ -171,15 +165,7 @@ func (t *typescriptBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey,
 		if lang == "context" {
 			continue
 		}
-		if argType == "" {
-			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", lang, value))
-		} else {
-			templateString := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
-				call := typescriptArgumentFormatter{}.Format(key, format)
-				return "${" + call + "}"
-			})
-			t.dataBuilder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", lang, argType, templateString))
-		}
+		t.options.WriteEntryData(&t.dataBuilder, argType, lang, value, entry)
 	}
 	t.dataBuilder.Unindent()
 	t.dataBuilder.AppendLines("},")
