@@ -28,4 +28,5 @@ require (
 require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	golang.org/x/text v0.3.7
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 )
