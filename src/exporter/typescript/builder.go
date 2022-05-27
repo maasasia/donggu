@@ -164,6 +164,7 @@ func (t *typescriptBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey,
 		if lang == "context" {
 			continue
 		}
+		value = strings.Replace(value, "`", "\\`", -1)
 		t.options.WriteEntryData(&t.dataBuilder, argType, lang, value, entry)
 	}
 	t.dataBuilder.Unindent()
