@@ -29,7 +29,7 @@ func (t TypescriptDictionaryExporter) Export(
 		return errors.Wrap(err, "failed to prepare project")
 	}
 
-	builder := typescript.NewTypescriptBuilder(metadata, typescript.TypescriptBuilderOptions{})
+	builder := typescript.NewTypescriptBuilder(metadata, &typescript.TypescriptBuilderOptions{})
 	if err := builder.Run(content.ToTree()); err != nil {
 		return err
 	}

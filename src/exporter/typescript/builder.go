@@ -7,10 +7,12 @@ import (
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
+	"github.com/maasasia/donggu/util"
 	"github.com/pkg/errors"
 )
 
 type typescriptBuilder struct {
+	shortener        util.Shortener
 	options          BuilderOptions
 	contentValidator dictionary.ContentValidator
 
@@ -21,12 +23,15 @@ type typescriptBuilder struct {
 }
 
 func NewTypescriptBuilder(metadata dictionary.Metadata, options BuilderOptions) *typescriptBuilder {
-	return &typescriptBuilder{
+	builder := &typescriptBuilder{
 		contentValidator: dictionary.NewContentValidator(metadata, dictionary.ContentValidationOptions{
 			SkipLangSupportCheck: true,
 		}),
-		options: options,
+		options:   options,
+		shortener: util.NewCountingShortener(),
 	}
+	builder.options.SetShortener(builder.shortener)
+	return builder
 }
 
 func (t *typescriptBuilder) AddArgType(key string, value map[string]string) {
@@ -158,7 +163,7 @@ func (t *typescriptBuilder) writeNodeToBuilder(
 }
 
 func (t *typescriptBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey, argType string, entry dictionary.Entry) {
-	t.dataBuilder.AppendLines(fmt.Sprintf(`"%s": {`, fullKey))
+	t.dataBuilder.AppendLines(fmt.Sprintf(`"%s": {`, t.shortener.Shorten(string(fullKey))))
 	t.dataBuilder.Indent()
 	for lang, value := range entry {
 		if lang == "context" {

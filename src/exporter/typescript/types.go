@@ -3,6 +3,7 @@ package typescript
 import (
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
+	"github.com/maasasia/donggu/util"
 )
 
 type ArgumentFormatter interface {
@@ -10,6 +11,7 @@ type ArgumentFormatter interface {
 }
 
 type BuilderOptions interface {
+	SetShortener(shortener util.Shortener)
 	ArgFormatter() ArgumentFormatter
 	WriteHeader(builder *code.IndentedCodeBuilder)
 	WriteEntryType(builder *code.IndentedCodeBuilder, methodName, interfaceName string, entryKey dictionary.EntryKey)
