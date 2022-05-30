@@ -28,7 +28,7 @@ func (t ReactBuilderOptions) WriteHeader(builder *code.IndentedCodeBuilder) {
 		"",
 		`import { DictionaryFnItem, DictionaryNFnItem, EntryOptions } from "../types";`,
 		`import { Formatter, replaceLineBreak as rlb } from "../util";`,
-		`type ResolverFunc = (key: keyof typeof DATA, options: unknown, language?: Language) => string;`,
+		`type ResolverFunc = (key: keyof typeof DATA, options?: EntryOptions, language?: Language) => string;`,
 		"",
 	)
 }
