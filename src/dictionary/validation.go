@@ -55,8 +55,8 @@ func (c ContentValidator) Validate(entry Entry) (templateKeys map[string]Templat
 		}
 	}
 	for key := range entry {
-		if strings.ToLower(key) != key {
-			err = errors.Errorf("key '%s' should be lowercase", key)
+		if keyErr := ValidateJoinedKey(EntryKey(key)); keyErr != nil {
+			err = keyErr
 			return
 		}
 		_, isSupportedLang := c.supportedLangSet[key]
@@ -116,7 +116,7 @@ func ValidateKeyPart(keyPart string) error {
 	if matched {
 		return nil
 	} else {
-		return errors.Errorf("invalid key part '%s'", keyPart)
+		return errors.Errorf("key part '%s' is not snake_case", keyPart)
 	}
 }
 
