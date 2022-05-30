@@ -53,6 +53,7 @@ func (t ReactBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuilder, m
 }
 
 func (t ReactBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) {
+	templateString = escapeTemplateStringLiteral(templateString)
 	if argType == "" {
 		builder.AppendLines(fmt.Sprintf("\"%s\": (options?: EntryOptions) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, templateString))
 	} else {

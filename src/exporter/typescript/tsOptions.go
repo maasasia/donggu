@@ -51,6 +51,7 @@ func (t TypescriptBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuild
 }
 
 func (t TypescriptBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) {
+	templateString = escapeTemplateStringLiteral(templateString)
 	if argType == "" {
 		builder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", language, templateString))
 	} else {
