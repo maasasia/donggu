@@ -39,7 +39,7 @@ donggu merge csv done.csv  // 작업된 CSV를 현재 프로젝트에 합침
 ```
 여기에서 어떤 데이터가 바뀌었는지의 diff 분석도 쉽게 가능합니다.
 
-## 시작하기
+# 시작하기
 [Releases](https://github.com/maasasia/donggu/releases/) 페이지에서 바이너리를 다운로드 하거나, 설치 스크립트를 이용해 다운로드 할 수 있습니다.
 ```bash
 wget -O install.sh https://raw.githubusercontent.com/maasasia/donggu/main/install.sh && chmod +x install.sh && ./install.sh
@@ -57,25 +57,84 @@ donggu init
 
 아래에서 보다 자세한 사용 방법을 알아보세요.
 
-## 사용방법
-### 다국어 데이터의 구성과 템플릿 문법
+# 사용방법
+## 프로젝트 구성
+동구의 프로젝트는 메타데이터 파일 (`metadata.json`), 데이터 파일 (`content.json`)으로 구성됩니다.
 
-### 코드 생성
-#### Typescript
+### 데이터 파일
+데이터 파일은 여러개의 **텍스트 항목**으로 이루어져 있습니다. 각 텍스트 항목은 고유한 키와 언어별로 대응되는 텍스트로 이루어져 있습니다.
 
-#### Typescript React
+각 키는 `.`으로 분리된 여러 개의 `snake_case` 항목으로 이루어져 있습니다. `camelCase`나 `PascalCase`를 사용해서는 안되고, 영어 소문자, 숫자, `_`를 제외하고는 사용할 수 없습니다.
 
-#### Go
+- (X) `common.appTitle`
+- (X) `common.1page.title` (숫자로 시작하면 안됨)
+- (O) `common.page_1.title`
+
+간단한 데이터 파일을 만든다면 아래와 같습니다.
+```json
+{
+    "user.my_page.welcome": {
+        "ko": "알파카 가입을 환영합니다!",
+        "en": "Welcome to Alpaca!",
+        "context": "처음 가입했을 때만 표출되는 텍스트"
+    },
+    "user.my_page.coupon_count": {
+        "ko": "#{NAME}님은 쿠폰을 #{COUNT|int}개 보유중입니다.",
+        "en": "Hi #{NAME}, you have #{COUNT|int} coupons."
+    }
+}
+```
+언어는 메타데이터 파일에 설정된 값들만 사용할 수 있고, 필수 언어로 지정된 언어들은 반드시 포함해야 합니다.
+
+`user.my_page.welcome`를 보면 `context`라는 키가 있습니다.
+이 키는 번역 텍스트가 아니고 텍스트 항목이 어떤 맥락에서 나오는 텍스트인지 설명하는 주석 역할을 합니다.
+여기에 어떤 화면에서 사용되는 항목인지, 어떤 상황에서만 나오는 값인지 등을 설명해서 디자이너나 번역가가 맥락을 잘못
+이해할 위험을 줄일 수 있습니다. `context`는 필수가 아니며, 생성되는 라이브러리 코드에 포함되지 않습니다.
+
+### 메타데이터 파일
+
+메타데이터 파일은 아래와 같은 필드로 이루어져 있습니다.
+
+- `supported_languages`: 프로젝트에서 지원하는 언어를 모두 입력합니다. `context`를 제외하고는 어떤 값이든 사용할 수 있습니다. 필요에 따라 자유롭게 사용하면 되나, [2글자의 ISO 639-1 코드](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)를 권장합니다.
+- `required_languages`: 모든 텍스트 항목이 지원해야 하는 언어들입니다. 여기에 있는 언어들은 모두 `supported_languages`에 포함되어 있어야 합니다.
+- `version`: 프로젝트의 버전입니다. 라이브러리 코드를 생성할 때 이 값을 이용합니다.
+- `exporter_options` (선택): 내보내기 형식별로 필요한 설정입니다. 내보내기 형식별로 필요한 설정은 다르며, [코드 생성](#)과 [내보내기와 들여오기](#)에 정리되어 있습니다.
+
+```json
+{
+  "exporter_options": {
+    "typescript": {
+      "packageName": "@maasasia/translation-alpaca"
+    }
+  },
+  "required_languages": ["ko", "en"],
+  "supported_languages": ["ko", "en", "ja"],
+  "version": "0.1.3"
+}
+```
+위의 예시를 설명하면, 이 프로젝트는
+- 한국어, 영어, 일본어에 대한 번역을 담고 있으며
+- 한국어, 영어는 모든 텍스트가 번역되어 있지만 일본어는 일부만 지원하고
+- 버전은 0.1.3입니다.
+- Typescript 패키지를 만들 때는 패키지명으로 `@maasasia/translation-alpaca`를 사용합니다.
+
+
+## 코드 생성
+### Typescript
+
+### Typescript React
+
+### Go
 
 #### 기존 프로젝트와의 연동
 생성된 라이브러리는 프로젝트에 직접 추가하거나, 언어별로 지원하는 패키지 시스템을 통해 이용할 수 있습니다.
 모노레포를 구성하거나 private package registry를 사용하는 등 다양한 시나리오에 대한 설명은
 [기존 프로젝트와의 연동](docs/integration.md)를 참고하세요.
 
-### 내보내기와 들여오기
+## 내보내기와 들여오기
 
-### CLI 문서
+## CLI 문서
 
 
-## License
+# License
 MIT
