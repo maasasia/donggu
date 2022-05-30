@@ -19,6 +19,10 @@ func execMergeCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to load project")
 	}
+	validateErr := content.Validate(meta, dictionary.ContentValidationOptions{})
+	if validateErr != nil {
+		return errors.Wrap(validateErr, "merge destination content file has errors")
+	}
 
 	filePath, err = filepath.Abs(filePath)
 	if err != nil {
@@ -27,10 +31,15 @@ func execMergeCommand(cmd *cobra.Command, args []string) error {
 
 	mergeContent, err := readContentFile(meta, format, filePath)
 	if err != nil {
-		return errors.Wrap(err, "failed to merging file")
+		return errors.Wrap(err, "failed merging file")
+	}
+	validateErr = mergeContent.Validate(meta, dictionary.ContentValidationOptions{})
+	if validateErr != nil {
+		return errors.Wrap(validateErr, "merge source content file has errors")
 	}
 
 	content = dictionary.MergeContent(mergeContent, content)
+
 	exportErr := exporter.JsonDictionaryExporter{}.Export(projectRoot, content, meta, exporter.OptionMap{})
 	if exportErr != nil {
 		return errors.Wrap(err, "failed to save merged file")

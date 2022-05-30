@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/maasasia/donggu/dictionary"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -13,6 +14,10 @@ func execExportCommand(cmd *cobra.Command, args []string) error {
 	content, meta, err := loadProjectFromCommand(cmd)
 	if err != nil {
 		return err
+	}
+	validateErr := content.Validate(meta, dictionary.ContentValidationOptions{})
+	if validateErr != nil {
+		return errors.Wrap(validateErr, "content file has errors")
 	}
 
 	targetRoot, err = filepath.Abs(targetRoot)
