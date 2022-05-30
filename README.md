@@ -118,15 +118,101 @@ donggu init
 - 버전은 0.1.3입니다.
 - Typescript 패키지를 만들 때는 패키지명으로 `@maasasia/translation-alpaca`를 사용합니다.
 
-
 ## 코드 생성
+동구의 `export` 명령으로 프로젝트의 다국어 데이터를 소스코드에서 사용하기 위해 라이브러리 코드를 생성할 수 있습니다.
+```bash
+donggu export typescript my-project
+```
+[i18next](https://www.i18next.com/)이나 [i18n-node](https://github.com/mashpie/i18n-node) 등 JSON을 동적으로 불러오는 라이브러리들과 달리,
+동구는 프로젝트의 데이터에 맞춰진 코드를 미리 생성합니다. 그렇기 때문에 키가 누락되거나 템플릿의 형태가 잘못되는 오류를 타입 검사로 사전에 방지할 수 있습니다.
+또 런타임에 JSON을 분석하지 않고 미리 데이터를 생성하므로 보다 뛰어난 성능을 기대할 수 있습니다.
+
 ### Typescript
+Typescript에서 다국어 데이터를 사용하기 위한 라이브러리를 생성합니다.
+```bash
+donggu export typescript my-project
+```
+자세한 사용 방법은 [Typescript Exporter](docs/exporter-ts.md)를 읽어주세요.
+
+#### 사용 예제
+```ts
+import { Donggu } from "@my-org/translations";  // 동구가 생성한 라이브러리
+
+// 현재 사용자의 언어를 판단하는 함수. HTTP 요청의 Accept-Language 파싱 등을 여기서 수행하면 됩니다.
+// 배열의 순서대로 우선순위를 가집니다.
+const languageResolver = () => {
+  return [getUserLanguage(), 'ko'];
+};
+const donggu = new Donggu(languageResolver);
+console.log(donggu.example.hello({name: "동구"})); // 동구님 안녕하세요!
+```
+
 
 ### Typescript React
+Typescript React에서 다국어 데이터를 사용하기 위한 라이브러리를 생성합니다.
+Typescript 라이브러리와 유사하지만, 줄바꿈 설정 등 React와의 연동을 돕는 기능이 포함되어 있습니다.
+```bash
+donggu export ts-react my-project
+```
+자세한 사용 방법은 [Typescript React Exporter](docs/exporter-ts-react.md)를 읽어주세요.
+
+#### 사용 예제
+```ts
+import { Donggu } from "@my-org/translations";  // 동구가 생성한 라이브러리
+
+// 현재 사용자의 언어를 판단하는 함수. HTTP 요청의 Accept-Language 파싱 등을 여기서 수행하면 됩니다.
+// 배열의 순서대로 우선순위를 가집니다.
+const languageResolver = () => {
+  return [getUserLanguage(), 'ko'];
+};
+const donggu = new Donggu(languageResolver);
+
+const MyElement = (name: string) => {
+  return (
+    <>
+      {donggu.example.hello({name})}
+    </>
+  );
+};
+
+// 동구님 안녕하세요!
+ReactDOM.render(<MyElement name="동구">, document.getElementById("root"))
+```
 
 ### Go
+Go에서 다국어 데이터를 사용하기 위한 라이브러리를 생성합니다.
+```bash
+donggu export go my-project
+```
+자세한 사용 방법은 [Go Exporter](docs/exporter-go.md)를 읽어주세요.
 
-#### 기존 프로젝트와의 연동
+#### 사용 예제
+```golang
+package main
+
+import (
+  "fmt"
+  "github.com/my-org/translations" 
+)
+
+// langResolver는 현재 사용자의 언어를 판단하는 함수입니다.
+// query 함수는 현재 표시하고자 하는 텍스트 항목에 원하는 언어가 있는지 반환하는 함수입니다.
+// 이 함수는 항상 query 결과가 true이거나 requiredLang에 포함되어 있는 값을 반환해야 합니다.
+func langResolver(query func(lang string) bool) string {
+    if query("en") {
+        return "en"
+    }
+    return "ko"
+}
+
+func main() {
+    donggu := translations.NewDonggu(langResolver)
+    // 동구님 안녕하세요!
+    fmt.Println(donggu.Example().Hello("동구"))
+}
+```
+
+### 기존 프로젝트와의 연동
 생성된 라이브러리는 프로젝트에 직접 추가하거나, 언어별로 지원하는 패키지 시스템을 통해 이용할 수 있습니다.
 모노레포를 구성하거나 private package registry를 사용하는 등 다양한 시나리오에 대한 설명은
 [기존 프로젝트와의 연동](docs/integration.md)를 참고하세요.
