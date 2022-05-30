@@ -1,10 +1,15 @@
+import React from "react";
+
 import { DATA, Language, _MDict_Impl, RequiredLanguage, Version } from "./generated/dictionary";
+import { EntryOptions } from "./types";
 
 export type FallbackOrderFn = (wanted?: Language) => [...Language[], RequiredLanguage];
 
 export class Donggu extends _MDict_Impl {
+    public lineBreakElement?: React.ReactNode;
+
     constructor(private readonly getFallbackOrder: FallbackOrderFn) {
-        super((key: keyof typeof DATA, options: unknown, language?: Language) => {
+        super((key: keyof typeof DATA, options?: EntryOptions, language?: Language) => {
             return this.resolve(key, options, language);
         });
     }
@@ -13,7 +18,10 @@ export class Donggu extends _MDict_Impl {
         return Version;
     }
 
-    public resolve<O>(key: keyof typeof DATA, options: O, language?: Language): string {
+    public resolve(key: keyof typeof DATA, options?: EntryOptions, language?: Language): string {
+        if (this.lineBreakElement) {
+            options = Object.assign({lineBreakElement: this.lineBreakElement}, options);
+        }
         if (language && (language in DATA[key])) {
             return (DATA[key] as any)[language](options);
         }
