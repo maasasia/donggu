@@ -61,6 +61,9 @@ donggu init
 - [프로젝트 구성](#usage-project)
 - [템플릿 포맷팅](#usage-templates)
 - [라이브러리 코드 생성](#usage-codegen)
+    - [Typescript](#usage-codegen-ts)
+    - [Typescript React](#usage-codegen-ts-react)
+    - [Go](#usage-codegen-go)
 - [데이터 내보내기와 들어오기](#usage-io)
 - [CLI](#usage-cli)
 
@@ -168,7 +171,7 @@ Donggu.ticket.issued({ ticketName: "30일 탑승권" });
 템플릿에 들어가는 값의 포맷을 지정할 수 있습니다.
 포맷 띄어쓰기, 숫자에 쉼표 등 어떻게 템플릿이 표시되어야 하는지를 나타냅니다.
 ```
-결제 잔액: #{BALANCE|int|}
+결제 잔액: #{BALANCE|int|,}
 ```
 위와 같이 `#{키|자료형|포맷}`의 형태로 템플릿을 정의해 포맷을 지정합니다. 포맷의 형태는 자료형마다 다릅니다.
 
@@ -231,7 +234,7 @@ donggu export typescript my-project
 동구는 프로젝트의 데이터에 맞춰진 코드를 미리 생성합니다. 그렇기 때문에 키가 누락되거나 템플릿의 형태가 잘못되는 오류를 타입 검사로 사전에 방지할 수 있습니다.
 또 런타임에 JSON을 분석하지 않고 미리 데이터를 생성하므로 보다 뛰어난 성능을 기대할 수 있습니다.
 
-### Typescript
+### Typescript <span id="usage-codegen-ts"></span>
 Typescript에서 다국어 데이터를 사용하기 위한 라이브러리를 생성합니다.
 ```bash
 donggu export typescript my-project
@@ -252,7 +255,7 @@ console.log(donggu.example.hello({name: "동구"})); // 동구님 안녕하세�
 ```
 
 
-### Typescript React
+### Typescript React <span id="usage-codegen-ts-react"></span>
 Typescript React에서 다국어 데이터를 사용하기 위한 라이브러리를 생성합니다.
 Typescript 라이브러리와 유사하지만, 줄바꿈 설정 등 React와의 연동을 돕는 기능이 포함되어 있습니다.
 ```bash
@@ -283,7 +286,7 @@ const MyElement = (name: string) => {
 ReactDOM.render(<MyElement name="동구">, document.getElementById("root"))
 ```
 
-### Go
+### Go <span id="usage-codegen-go"></span>
 Go에서 다국어 데이터를 사용하기 위한 라이브러리를 생성합니다.
 ```bash
 donggu export go my-project
