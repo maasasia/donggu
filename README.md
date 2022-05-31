@@ -218,8 +218,105 @@ func main() {
 [기존 프로젝트와의 연동](docs/integration.md)를 참고하세요.
 
 ## 내보내기와 들여오기
+### 데이터 내보내기
+앞서 설명한 것과 같이 다국어 데이터의 원본은 프로젝트 단위로 관리되지만, 외부에 공유하기 위해 프로젝트 데이터를
+여러 파일 형태로 내보낼 수 있습니다.
+```
+donggu export [내보낼 파일 형태] [내보낼 파일명]
+```
 
-## CLI 문서
+### 데이터 들여오기 (합치기)
+`donggu merge` 명령으로 여러 데이터 파일을 하나로 합칠 수 있습니다.
+```
+donggu merge [외부 데이터 형태] [외부 데이터 파일명]
+```
+외부 데이터 형태는 `json`, `csv`를 지원합니다.
+
+아래와 같이 프로젝트가 위치한 폴더에서 `donggu merge`를 실행하면 외부 데이터(`exported.csv`)의 내용물을 프로젝트 데이터(`content.json`)과
+합친 후, 결과물을 `content.json`에 저장합니다.
+```sh
+$ ls
+content.json metadata.json exported.csv
+$ donggu merge csv exported.csv
+✅ Done in 0.015s
+```
+외부 데이터는 프로젝트 데이터를 항상 덮어씌우지만, 두 데이터가 일부만 겹칠 경우에는 최대한
+원본 데이터를 유지하기 위해 노력합니다.
+
+다음과 같은 `content.json`을 가지는 프로젝트가 있고, 여기에 `import.json`을 합치는 경우를 생각해봅시다.
+#### 프로젝트 데이터 (`content.json`)
+```json
+{
+  "page1": {
+    "ko": "1페이지",
+    "en": "Page 1"
+  },
+  "hello": {
+    "ko": "안녕",
+    "ja": "こんにちは"  
+  }
+}
+```
+#### 외부 데이터 (`import.json`)
+```json
+{
+  "hello": {
+    "ko": "안녕하세요",
+    "en": "Hello"
+  },
+  "page2": {
+    "ko": "2페이지",
+    "en": "Page 2"
+  }
+}
+```
+두 파일을 합친 결과는 다음과 같습니다.
+```json
+{
+  "page1": {
+    "ko": "1페이지",
+    "en": "Page 1"
+  },
+  "page2": {
+    "ko": "2페이지",
+    "en": "Page 2"
+  },
+  "hello": {
+    "ko": "안녕하세요",
+    "en": "Hello",
+    "ja": "こんにちは"
+  },
+}
+```
+
+- `page1`은 프로젝트 데이터에는 있지만 외부 데이터에는 없어 그대로 유지됩니다.
+- `page2`는 외부 데이터에만 있어 새로 추가되었습니다.
+- `hello`는 두 데이터에 모두 있는데, 프로젝트 데이터에만 있는 `ja` 텍스트는 그대로 유지되었지만 외부 데이터에도 있는 `en`, `ko`는 추가되거나 덮어씌워졌습니다.
+
+
+
+## CLI
+```
+Donggu is a simple cli for managing i18n text data
+
+Usage:
+  donggu [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  diff        Show differences of a content file against the current project
+  export      Export something
+  fmt         Format content and metadata file
+  help        Help about any command
+  init        Initialize new project
+  merge       Merge a content file to the current project
+
+Flags:
+  -h, --help             help for donggu
+  -P, --project string   Project folder (default: current directory)
+
+Use "donggu [command] --help" for more information about a command.
+```
 
 
 # License
