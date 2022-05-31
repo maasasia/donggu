@@ -1,6 +1,9 @@
 # Typescript Exporter
 다국어 데이터를 사용할 수 있는 Typescript 패키지를 만들어 주는 exporter입니다.
 
+- [사용 방법](#usage)
+- [연동 가이드](#integration)
+
 ## 메타데이터 파일 준비
 `metadata.json`에서 `exporter_options`의 `typescript` 키 아래 옵션을 지정할 수 있습니다.
 다음과 같은 정보가 필요합니다.
@@ -157,9 +160,9 @@ export const DG = new Donggu(() => {
 });
 ```
 
-1. HTTP 헤더의 `Accept-Language` 값을 파싱하여 사용자의 선호 언어를 추출합니다.
-2. cls-hooked를 제대로 쓸 수 있도록 래퍼로 함수를 감싸고, 선호 언어를 **동구 namespace에** 저장합니다.
-3. 텍스트를 생성해야 하는 라우트에서 `Donggu` 인스턴스를 가져와 사용합니다.
+#### 1. HTTP 헤더의 `Accept-Language` 값을 파싱하여 사용자의 선호 언어를 추출합니다.
+#### 2. cls-hooked를 제대로 쓸 수 있도록 래퍼로 함수를 감싸고, 선호 언어를 **동구 namespace에** 저장합니다.
+#### 3. 텍스트를 생성해야 하는 라우트에서 `Donggu` 인스턴스를 가져와 사용합니다.
 
 미들웨어는 이렇게 정의할 수 있습니다.
 ```ts
