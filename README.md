@@ -58,7 +58,14 @@ donggu init
 아래에서 보다 자세한 사용 방법을 알아보세요.
 
 # 사용방법
-## 프로젝트 구성
+아래와 같은 동구의 주요 기능을 설명합니다.
+- [프로젝트 구성](#usage-project)
+- [템플릿 포맷팅](#usage-templates)
+- [라이브러리 코드 생성](#usage-codegen)
+- [데이터 내보내기와 들어오기](#usage-io)
+- [CLI](#usage-cli)
+
+## 프로젝트 구성 <span id="usage-project"></span>
 동구의 프로젝트는 메타데이터 파일 (`metadata.json`), 데이터 파일 (`content.json`)으로 구성됩니다.
 
 ### 데이터 파일
@@ -91,6 +98,7 @@ donggu init
 여기에 어떤 화면에서 사용되는 항목인지, 어떤 상황에서만 나오는 값인지 등을 설명해서 디자이너나 번역가가 맥락을 잘못
 이해할 위험을 줄일 수 있습니다. `context`는 필수가 아니며, 생성되는 라이브러리 코드에 포함되지 않습니다.
 
+
 ### 메타데이터 파일
 
 메타데이터 파일은 아래와 같은 필드로 이루어져 있습니다.
@@ -118,7 +126,16 @@ donggu init
 - 버전은 0.1.3입니다.
 - Typescript 패키지를 만들 때는 패키지명으로 `@maasasia/translation-alpaca`를 사용합니다.
 
-## 코드 생성
+### CLI로 프로젝트 생성
+위와 같은 프로젝트 구성은 동구를 이용해 자동으로 생성할 수 있습니다. 프로젝트를 만들고 싶은 폴더로 이동해
+```
+donggu init
+```
+후 필요한 필드를 채워주세요.
+
+## 템플릿 포맷팅 <span id="usage-templates"></span>
+
+## 라이브러리 코드 생성 <span id="usage-codegen"></span>
 동구의 `export` 명령으로 프로젝트의 다국어 데이터를 소스코드에서 사용하기 위해 라이브러리 코드를 생성할 수 있습니다.
 ```bash
 donggu export typescript my-project
@@ -217,7 +234,7 @@ func main() {
 모노레포를 구성하거나 private package registry를 사용하는 등 다양한 시나리오에 대한 설명은
 [기존 프로젝트와의 연동](docs/integration.md)를 참고하세요.
 
-## 내보내기와 들여오기
+## 데이터 내보내기와 들여오기 <span id="usage-io"></span>
 ### 데이터 내보내기
 앞서 설명한 것과 같이 다국어 데이터의 원본은 프로젝트 단위로 관리되지만, 외부에 공유하기 위해 프로젝트 데이터를
 여러 파일 형태로 내보낼 수 있습니다.
@@ -295,7 +312,7 @@ $ donggu merge csv exported.csv
 
 
 
-## CLI
+## CLI <span id="usage-cli"></span>
 ```
 Donggu is a simple cli for managing i18n text data
 
