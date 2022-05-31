@@ -5,7 +5,19 @@
 동구는 다국어 데이터 관리를 위한 가볍지만 강력한 CLI입니다.
 데이터 관리부터 번역가와의 텍스트 들여오기/내보내기, 소스코드와의 간편한 연동 등 프로덕션 환경에서 요구하는 모든 상황을 대응할 수 있습니다.
 
-## 주요 기능
+- [주요 기능](#features)
+- [시작하기](#getting-started)
+- [프로젝트 구성](#usage-project)
+- [템플릿 포맷팅](#usage-templates)
+- [라이브러리 코드 생성](#usage-codegen)
+    - [Typescript](#usage-codegen-ts)
+    - [Typescript React](#usage-codegen-ts-react)
+    - [Go](#usage-codegen-go)
+- [데이터 내보내기와 들어오기](#usage-io)
+- [CLI](#usage-cli)
+
+
+## 주요 기능 <span id="features"></span>
 ### 템플릿 포맷팅
 문자열로 템플릿을 만들어 동적인 값들을 다국어 텍스트와 쉽게 합칠 수 있습니다. 강력한 템플릿 기능을 통해 다양한 포맷을 자동으로 적용할 수 있고, 번역가와 디자이너에게 텍스트의 맥락을 설명하기 쉬워집니다.
 
@@ -38,7 +50,7 @@ donggu merge csv done.csv  // 작업된 CSV를 현재 프로젝트에 합침
 ```
 여기에서 어떤 데이터가 바뀌었는지의 diff 분석도 쉽게 가능합니다.
 
-# 시작하기
+# 시작하기 <span id="getting-started"></span>
 [Releases](https://github.com/maasasia/donggu/releases/) 페이지에서 바이너리를 다운로드 하거나, 설치 스크립트를 이용해 다운로드 할 수 있습니다.
 ```bash
 wget -O install.sh https://raw.githubusercontent.com/maasasia/donggu/main/install.sh && chmod +x install.sh && ./install.sh
