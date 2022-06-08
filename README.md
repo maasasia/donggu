@@ -1,6 +1,7 @@
 # Donggu
-
-![Donggu face](logo.png)
+<p align="center">
+  <img src="docs/assets/face.gif" width="250px" />
+</p>
 
 동구는 다국어 데이터 관리를 위한 가볍지만 강력한 CLI입니다.
 데이터 관리부터 번역가와의 텍스트 들여오기/내보내기, 소스코드와의 간편한 연동 등 프로덕션 환경에서 요구하는 모든 상황을 대응할 수 있습니다.
