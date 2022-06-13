@@ -11,7 +11,7 @@ import (
 
 const (
 	TemplateParenPattern  = "#{(.*?)}"
-	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool)(?:\|(.*?))?)?}`
+	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool|plural)(?:\|(.*?))?)?}`
 )
 
 var templateParenRegex = regexp.MustCompile(TemplateParenPattern)

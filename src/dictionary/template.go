@@ -22,6 +22,7 @@ const (
 	FloatTemplateKeyType  TemplateKeyType = "float"
 	IntTemplateKeyType    TemplateKeyType = "int"
 	StringTemplateKeyType TemplateKeyType = "string"
+	PluralTemplateKeyType TemplateKeyType = "plural"
 )
 
 type TemplateKeyFormat struct {
@@ -64,9 +65,18 @@ func ParseTemplateKeyFormat(kind, option string) (TemplateKeyFormat, error) {
 		return parseFloatFormat(option)
 	case StringTemplateKeyType:
 		return parseStringFormat(option)
+	case PluralTemplateKeyType:
+		return parsePluralFormat(option)
 	default:
 		return TemplateKeyFormat{}, errors.Errorf("Unknown template parameter type '%s'", kind)
 	}
+}
+
+func parsePluralFormat(option string) (TemplateKeyFormat, error) {
+	return TemplateKeyFormat{
+		Kind:   PluralTemplateKeyType,
+		Option: strings.Split(option, ","),
+	}, nil
 }
 
 func parseBoolFormat(option string) (TemplateKeyFormat, error) {

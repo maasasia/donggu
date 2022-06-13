@@ -1,15 +1,26 @@
 package dictionary
 
 import (
+	"regexp"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
+
+// Regular expression for validating plural operators
+const PluralOperatorRegex = `^([<>]=?)|((%|\/)[1-9]\d*)$`
+
+type PluralDefinition struct {
+	Op    string
+	Value int
+}
 
 type Metadata struct {
 	Version            string
 	RequiredLanguages  []string
 	SupportedLanguages []string
 	ExporterOptions    map[string]map[string]interface{}
+	Plurals            map[string][]PluralDefinition
 }
 
 func (m Metadata) SupportedLanguageSet() map[string]struct{} {
@@ -62,10 +73,29 @@ func (m Metadata) Validate() (err *multierror.Error) {
 		}
 		requiredLangSet[lang] = struct{}{}
 		if _, ok := supportedLangSet[lang]; !ok {
-			err = multierror.Append(err, errors.Errorf("Language '%s' is required but not in SupportedLanguages", lang))
+			err = multierror.Append(err, errors.Errorf("language '%s' is required but not in SupportedLanguages", lang))
 		}
 		if !IsValidLanguageKey(lang) {
 			err = multierror.Append(err, errors.Errorf("invalid language '%s' in RequiredLanguages", lang))
+		}
+	}
+	if plError := m.validatePlurals(&supportedLangSet); plError != nil {
+		err = multierror.Append(err, errors.Wrap(plError, "errors with plural definition"))
+	}
+	return
+}
+
+func (m Metadata) validatePlurals(languages *map[string]struct{}) (err *multierror.Error) {
+	operatorRegex := regexp.MustCompile(PluralOperatorRegex)
+	for lang, defs := range m.Plurals {
+		if _, ok := (*languages)[lang]; !ok {
+			err = multierror.Append(err, errors.Errorf("language '%s' is defined in plurals but not in SupportedLanguages", lang))
+			continue
+		}
+		for index, def := range defs {
+			if !operatorRegex.MatchString(def.Op) {
+				err = multierror.Append(err, errors.Errorf("plural operator '%s' of language '%s', index [%d] is invalid", def.Op, lang, index))
+			}
 		}
 	}
 	return
