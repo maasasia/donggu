@@ -11,8 +11,8 @@ import (
 const PluralOperatorRegex = `^([<>]=?)|((%|\/)[1-9]\d*)$`
 
 type PluralDefinition struct {
-	Op    string
-	Value int
+	Op    string `json:"op"`
+	Value int    `json:"value"`
 }
 
 type Metadata struct {

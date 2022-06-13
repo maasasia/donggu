@@ -10,12 +10,18 @@ import (
 	"github.com/pkg/errors"
 )
 
+type jsonPluralDefinition struct {
+	Op    string `json:"op"`
+	Value int    `json:"value"`
+}
+
 type jsonContentType map[string]map[string]string
 type jsonMetadataType struct {
 	Version            string                            `json:"version"`
 	RequiredLanguages  []string                          `json:"required_languages"`
 	SupportedLanguages []string                          `json:"supported_languages"`
 	ExporterOptions    map[string]map[string]interface{} `json:"exporter_options"`
+	Plurals            map[string][]jsonPluralDefinition `json:"plurals"`
 }
 
 type JsonDictionaryImporter struct{}
@@ -52,9 +58,16 @@ func (j JsonDictionaryImporter) ImportMetadata(file io.Reader) (dictionary.Metad
 	result.RequiredLanguages = decoded.RequiredLanguages
 	result.SupportedLanguages = decoded.SupportedLanguages
 	result.Version = decoded.Version
-	result.ExporterOptions = decoded.ExporterOptions
 	if result.Version == "" {
 		return dictionary.Metadata{}, errors.New("version missing")
+	}
+	result.ExporterOptions = decoded.ExporterOptions
+	result.Plurals = map[string][]dictionary.PluralDefinition{}
+	for lang, defs := range decoded.Plurals {
+		result.Plurals[lang] = make([]dictionary.PluralDefinition, 0, len(defs))
+		for _, def := range defs {
+			result.Plurals[lang] = append(result.Plurals[lang], dictionary.PluralDefinition(def))
+		}
 	}
 
 	return result, nil

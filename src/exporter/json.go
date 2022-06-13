@@ -68,6 +68,7 @@ func (j JsonDictionaryExporter) ExportMetadata(file io.Writer, metadata dictiona
 		"required_languages":  metadata.RequiredLanguages,
 		"supported_languages": metadata.SupportedLanguages,
 		"exporter_options":    metadata.ExporterOptions,
+		"plurals":             metadata.Plurals,
 	}
 
 	if err := encoder.Encode(jsonObj); err != nil {
