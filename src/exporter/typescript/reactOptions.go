@@ -7,6 +7,7 @@ import (
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
 	"github.com/maasasia/donggu/util"
+	"github.com/pkg/errors"
 )
 
 type ReactBuilderOptions struct{ shortener util.Shortener }
@@ -52,15 +53,19 @@ func (t ReactBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuilder, m
 	}
 }
 
-func (t ReactBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) {
+func (t ReactBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) error {
 	templateString = escapeTemplateStringLiteral(templateString)
 	if argType == "" {
 		builder.AppendLines(fmt.Sprintf("\"%s\": (options?: EntryOptions) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, templateString))
 	} else {
-		templateString := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
+		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
 			call := reactArgumentFormatter{}.Format(key, format)
 			return "`,options?.lineBreakElement)}{" + call + "}{rlb(`"
 		})
+		if err != nil {
+			return errors.Wrap(err, "failed to parse template parameter")
+		}
 		builder.AppendLines(fmt.Sprintf("\"%s\": (param: %s, options?: EntryOptions<%s>) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, argType, argType, templateString))
 	}
+	return nil
 }

@@ -128,7 +128,12 @@ func (g *golangBuilder) addEntry(entry dictionary.Entry, entryKey dictionary.Ent
 		if lang == "context" {
 			continue
 		}
-		g.builder.writeEntryImpl(entryKey, lang, paramArgs, g.buildFormatterReturnValue(entry, lang, templateKeys))
+		formatterValue, formatErr := g.buildFormatterReturnValue(entry, lang, templateKeys)
+		if err != nil {
+			err = errors.Wrap(formatErr, "failed to build formatter value")
+			return
+		}
+		g.builder.writeEntryImpl(entryKey, lang, paramArgs, formatterValue)
 	}
 	return
 }
@@ -160,17 +165,20 @@ func (g *golangBuilder) buildFormatterReturnValue(
 	entry dictionary.Entry,
 	lang string,
 	argTypes map[string]dictionary.TemplateKeyFormat,
-) *jen.Statement {
+) (*jen.Statement, error) {
 	params := make([]jen.Code, 1)
-	templateString := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
+	templateString, err := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
 		formatString, argValue := golangArgumentFormatter{}.Format(key, format)
 		params = append(params, argValue)
 		return formatString
 	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse template parameter")
+	}
 	if len(params) == 1 {
-		return jen.Lit(templateString)
+		return jen.Lit(templateString), nil
 	} else {
 		params[0] = jen.Lit(templateString)
-		return jen.Qual("fmt", "Sprintf").Call(params...)
+		return jen.Qual("fmt", "Sprintf").Call(params...), nil
 	}
 }

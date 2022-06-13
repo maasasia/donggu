@@ -7,6 +7,7 @@ import (
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
 	"github.com/maasasia/donggu/util"
+	"github.com/pkg/errors"
 )
 
 type TypescriptBuilderOptions struct{ shortener util.Shortener }
@@ -50,15 +51,19 @@ func (t TypescriptBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuild
 	}
 }
 
-func (t TypescriptBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) {
+func (t TypescriptBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) error {
 	templateString = escapeTemplateStringLiteral(templateString)
 	if argType == "" {
 		builder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", language, templateString))
 	} else {
-		templateString := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
+		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
 			call := typescriptArgumentFormatter{}.Format(key, format)
 			return "${" + call + "}"
 		})
+		if err != nil {
+			return errors.Wrap(err, "failed to parse template parameter")
+		}
 		builder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", language, argType, templateString))
 	}
+	return nil
 }
