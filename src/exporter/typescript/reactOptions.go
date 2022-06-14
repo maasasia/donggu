@@ -59,7 +59,7 @@ func (t ReactBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, a
 		builder.AppendLines(fmt.Sprintf("\"%s\": (options?: EntryOptions) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, templateString))
 	} else {
 		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
-			call := reactArgumentFormatter{}.Format(key, format)
+			call := reactArgumentFormatter{}.Format(language, key, format)
 			return "`,options?.lineBreakElement)}{" + call + "}{rlb(`"
 		})
 		if err != nil {

@@ -1,3 +1,5 @@
+import { Language, PLURALS } from "./generated/dictionary";
+
 interface FloatFormatterOptions {
     padCharacter: string | null;
     width: number | null;
@@ -14,6 +16,7 @@ export const Formatter = {
     float: (v: number, options: FloatFormatterOptions | null) => formatNumeric(v, options),
     // TODO: i18n
     bool: (v: boolean) => v ? 'yes' : 'no',
+    plural: (v: number, lang: Language, values: string[]) => values[PLURALS[lang](v)],
 }
 
 function formatNumeric(value: number, options: FloatFormatterOptions | null): string {

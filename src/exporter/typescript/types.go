@@ -7,7 +7,7 @@ import (
 )
 
 type ArgumentFormatter interface {
-	Format(key string, format dictionary.TemplateKeyFormat) string
+	Format(language, key string, format dictionary.TemplateKeyFormat) string
 }
 
 type BuilderOptions interface {

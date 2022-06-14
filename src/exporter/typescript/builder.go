@@ -202,6 +202,9 @@ func (t *typescriptBuilder) Build(metadata dictionary.Metadata, w io.Writer) {
 		"",
 	)
 
+	builder.AppendBlock(typescriptPluralBuilder{}.Build(metadata))
+	builder.AppendLines("")
+
 	builder.AppendLines("export const DATA = {")
 	builder.IndentedBlock(t.dataBuilder)
 	builder.AppendLines("};", "")

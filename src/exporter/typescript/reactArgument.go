@@ -3,6 +3,7 @@ package typescript
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
@@ -12,7 +13,7 @@ type reactArgumentFormatter struct {
 	// typescriptArgumentFormatter
 }
 
-func (r reactArgumentFormatter) Format(key string, format dictionary.TemplateKeyFormat) string {
+func (r reactArgumentFormatter) Format(language, key string, format dictionary.TemplateKeyFormat) string {
 	key = code.TemplateKeyToCamelCase(key)
 	switch format.Kind {
 	case dictionary.FloatTemplateKeyType:
@@ -21,6 +22,8 @@ func (r reactArgumentFormatter) Format(key string, format dictionary.TemplateKey
 		return fmt.Sprintf("Formatter.int(param.%s, %s, options?.wrappingElement?.['%s'])", key, r.numericOptions(key, format), key)
 	case dictionary.BoolTemplateKeyType:
 		return r.formatBool(key, format)
+	case dictionary.PluralTemplateKeyType:
+		return r.formatPlural(language, key, format)
 	default:
 		return fmt.Sprintf("Formatter.string(param.%s, options?.wrappingElement?.['%s'])", key, key)
 	}
@@ -33,6 +36,12 @@ func (r reactArgumentFormatter) formatBool(key string, format dictionary.Templat
 	} else {
 		return fmt.Sprintf("Formatter.string(param.%s ? `%s` : `%s`, options?.wrappingElement?.['%s'])", key, options.TrueValue, options.FalseValue, key)
 	}
+}
+
+func (t reactArgumentFormatter) formatPlural(language, key string, format dictionary.TemplateKeyFormat) string {
+	options := format.Option.([]string)
+	optArray := strings.Join(options, ",")
+	return fmt.Sprintf(`Formatter.plural(param.%s, "%s", [%s])`, key, language, optArray)
 }
 
 func (r reactArgumentFormatter) numericOptions(key string, format dictionary.TemplateKeyFormat) string {

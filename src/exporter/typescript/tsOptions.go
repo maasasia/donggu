@@ -57,7 +57,7 @@ func (t TypescriptBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuild
 		builder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", language, templateString))
 	} else {
 		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
-			call := typescriptArgumentFormatter{}.Format(key, format)
+			call := typescriptArgumentFormatter{}.Format(language, key, format)
 			return "${" + call + "}"
 		})
 		if err != nil {
