@@ -93,9 +93,16 @@ func (j JsonDictionaryExporter) buildPluralObject(metadata dictionary.Metadata) 
 	for lang, defs := range metadata.Plurals {
 		conv := make([]jsonPluralDefinition, len(defs))
 		for index, def := range defs {
-			conv[index] = jsonPluralDefinition{
-				Op:    fmt.Sprintf("%s%d", def.Op, def.Operand),
-				Value: def.Equals,
+			if def.HasOperand {
+				conv[index] = jsonPluralDefinition{
+					Op:    fmt.Sprintf("%s%d", def.Op, def.Operand),
+					Value: def.Equals,
+				}
+			} else {
+				conv[index] = jsonPluralDefinition{
+					Op:    def.Op,
+					Value: def.Equals,
+				}
 			}
 		}
 		ret[lang] = conv

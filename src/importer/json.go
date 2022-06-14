@@ -32,9 +32,10 @@ func (j jsonPluralDefinition) Parse() (dictionary.PluralDefinition, error) {
 			return dictionary.PluralDefinition{}, errors.Errorf("'%s' is an invalid operand", operandStr)
 		}
 		return dictionary.PluralDefinition{
-			Op:      match[0][2],
-			Operand: int(operand),
-			Equals:  j.Value,
+			Op:         match[0][2],
+			Operand:    int(operand),
+			HasOperand: true,
+			Equals:     j.Value,
 		}, nil
 	} else {
 		return dictionary.PluralDefinition{

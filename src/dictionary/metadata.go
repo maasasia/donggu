@@ -6,9 +6,10 @@ import (
 )
 
 type PluralDefinition struct {
-	Op      string
-	Operand int
-	Equals  int
+	Op         string
+	Operand    int
+	HasOperand bool
+	Equals     int
 }
 
 func (p PluralDefinition) Valid() error {
@@ -31,7 +32,7 @@ func (p PluralDefinition) Valid() error {
 }
 
 func (p PluralDefinition) validateIneq() error {
-	if p.Operand != 0 {
+	if p.HasOperand {
 		return errors.Errorf("operator '%s' should not have operand", p.Op)
 	}
 	if p.Equals <= 0 {
@@ -41,6 +42,9 @@ func (p PluralDefinition) validateIneq() error {
 }
 
 func (p PluralDefinition) validateMod() error {
+	if !p.HasOperand {
+		return errors.Errorf("operator '%s' should have operand", p.Op)
+	}
 	if p.Operand <= 0 {
 		return errors.New("operand must be greater than zero")
 	}
@@ -51,6 +55,9 @@ func (p PluralDefinition) validateMod() error {
 }
 
 func (p PluralDefinition) validateDiv() error {
+	if !p.HasOperand {
+		return errors.Errorf("operator '%s' should have operand", p.Op)
+	}
 	if p.Equals <= 0 || p.Operand <= 0 {
 		return errors.New("value and operand must be greater than zero")
 	}
