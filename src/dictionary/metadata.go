@@ -1,18 +1,60 @@
 package dictionary
 
 import (
-	"regexp"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 )
 
-// Regular expression for validating plural operators
-const PluralOperatorRegex = `^([<>]=?)|((%|\/)[1-9]\d*)$`
-
 type PluralDefinition struct {
-	Op    string `json:"op"`
-	Value int    `json:"value"`
+	Op      string
+	Operand int
+	Equals  int
+}
+
+func (p PluralDefinition) Valid() error {
+	switch p.Op {
+	case "<":
+		fallthrough
+	case "<=":
+		fallthrough
+	case ">":
+		fallthrough
+	case ">=":
+		return p.validateIneq()
+	case "%":
+		return p.validateMod()
+	case "/":
+		return p.validateDiv()
+	default:
+		return errors.Errorf("unknown operator '%s'", p.Op)
+	}
+}
+
+func (p PluralDefinition) validateIneq() error {
+	if p.Operand != 0 {
+		return errors.Errorf("operator '%s' should not have operand", p.Op)
+	}
+	if p.Equals <= 0 {
+		return errors.New("value must be greater than zero")
+	}
+	return nil
+}
+
+func (p PluralDefinition) validateMod() error {
+	if p.Operand <= 0 {
+		return errors.New("operand must be greater than zero")
+	}
+	if p.Operand <= p.Equals || p.Equals < 0 {
+		return errors.New("value is an invalid modulo value")
+	}
+	return nil
+}
+
+func (p PluralDefinition) validateDiv() error {
+	if p.Equals <= 0 || p.Operand <= 0 {
+		return errors.New("value and operand must be greater than zero")
+	}
+	return nil
 }
 
 type Metadata struct {
@@ -86,15 +128,14 @@ func (m Metadata) Validate() (err *multierror.Error) {
 }
 
 func (m Metadata) validatePlurals(languages *map[string]struct{}) (err *multierror.Error) {
-	operatorRegex := regexp.MustCompile(PluralOperatorRegex)
 	for lang, defs := range m.Plurals {
 		if _, ok := (*languages)[lang]; !ok {
 			err = multierror.Append(err, errors.Errorf("language '%s' is defined in plurals but not in SupportedLanguages", lang))
 			continue
 		}
 		for index, def := range defs {
-			if !operatorRegex.MatchString(def.Op) {
-				err = multierror.Append(err, errors.Errorf("plural operator '%s' of language '%s', index [%d] is invalid", def.Op, lang, index))
+			if validateErr := def.Valid(); validateErr != nil {
+				err = multierror.Append(err, errors.Wrapf(validateErr, "invalid plural definition for language '%s', index [%d]", lang, index))
 			}
 		}
 	}
