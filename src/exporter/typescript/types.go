@@ -7,11 +7,12 @@ import (
 )
 
 type ArgumentFormatter interface {
-	Format(language, key string, format dictionary.TemplateKeyFormat) string
+	Format(language, key string, format dictionary.TemplateKeyFormat) (string, error)
 }
 
 type BuilderOptions interface {
 	SetShortener(shortener util.Shortener)
+	SetMetadata(metadata *dictionary.Metadata)
 	ArgFormatter() ArgumentFormatter
 	WriteHeader(builder *code.IndentedCodeBuilder)
 	WriteEntryType(builder *code.IndentedCodeBuilder, methodName, interfaceName string, entryKey dictionary.EntryKey)

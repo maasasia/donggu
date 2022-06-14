@@ -52,7 +52,7 @@ func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
 	return templates, nil
 }
 
-func (e Entry) ReplacedTemplateValue(key string, replaceFn func(string, TemplateKeyFormat) string) (string, error) {
+func (e Entry) ReplacedTemplateValue(key string, replaceFn func(string, TemplateKeyFormat) (string, error)) (string, error) {
 	var err error = nil
 	replaced := templateParenRegex.ReplaceAllStringFunc(e[key], func(from string) string {
 		itemMatch := templateOptionRegex.FindAllStringSubmatch(from, -1)
@@ -63,7 +63,12 @@ func (e Entry) ReplacedTemplateValue(key string, replaceFn func(string, Template
 			err = keyErr
 			return from
 		}
-		return replaceFn(groups[1], keyFormat)
+		replaced, replaceErr := replaceFn(groups[1], keyFormat)
+		if replaceErr != nil {
+			err = replaceErr
+			return from
+		}
+		return replaced
 	})
 	return replaced, err
 }

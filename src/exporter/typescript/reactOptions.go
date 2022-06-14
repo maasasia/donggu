@@ -10,14 +10,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ReactBuilderOptions struct{ shortener util.Shortener }
+type ReactBuilderOptions struct {
+	shortener util.Shortener
+	metadata  *dictionary.Metadata
+}
 
 func (r *ReactBuilderOptions) SetShortener(shortener util.Shortener) {
 	r.shortener = shortener
 }
 
+func (r *ReactBuilderOptions) SetMetadata(metadata *dictionary.Metadata) {
+	r.metadata = metadata
+}
+
 func (r ReactBuilderOptions) ArgFormatter() ArgumentFormatter {
-	return reactArgumentFormatter{}
+	return reactArgumentFormatter{metadata: r.metadata}
 }
 
 func (t ReactBuilderOptions) WriteHeader(builder *code.IndentedCodeBuilder) {
@@ -58,9 +65,12 @@ func (t ReactBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, a
 	if argType == "" {
 		builder.AppendLines(fmt.Sprintf("\"%s\": (options?: EntryOptions) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, templateString))
 	} else {
-		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
-			call := reactArgumentFormatter{}.Format(language, key, format)
-			return "`,options?.lineBreakElement)}{" + call + "}{rlb(`"
+		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) (string, error) {
+			call, callErr := t.ArgFormatter().Format(language, key, format)
+			if callErr != nil {
+				return "", errors.Wrapf(callErr, "failed to format template '%s'", key)
+			}
+			return "`,options?.lineBreakElement)}{" + call + "}{rlb(`", nil
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to parse template parameter")

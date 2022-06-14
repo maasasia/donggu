@@ -167,10 +167,10 @@ func (g *golangBuilder) buildFormatterReturnValue(
 	argTypes map[string]dictionary.TemplateKeyFormat,
 ) (*jen.Statement, error) {
 	params := make([]jen.Code, 1)
-	templateString, err := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) string {
+	templateString, err := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) (string, error) {
 		formatString, argValue := golangArgumentFormatter{}.Format(key, format)
 		params = append(params, argValue)
-		return formatString
+		return formatString, nil
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse template parameter")

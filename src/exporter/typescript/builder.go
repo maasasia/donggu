@@ -31,6 +31,7 @@ func NewTypescriptBuilder(metadata dictionary.Metadata, options BuilderOptions) 
 		shortener: util.NewCountingShortener(),
 	}
 	builder.options.SetShortener(builder.shortener)
+	builder.options.SetMetadata(&metadata)
 	return builder
 }
 

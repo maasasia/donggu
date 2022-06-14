@@ -2,6 +2,7 @@ package typescript
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,22 +11,24 @@ import (
 )
 
 type reactArgumentFormatter struct {
-	// typescriptArgumentFormatter
+	metadata *dictionary.Metadata
 }
 
-func (r reactArgumentFormatter) Format(language, key string, format dictionary.TemplateKeyFormat) string {
+func (r reactArgumentFormatter) Format(language, key string, format dictionary.TemplateKeyFormat) (string, error) {
 	key = code.TemplateKeyToCamelCase(key)
 	switch format.Kind {
 	case dictionary.FloatTemplateKeyType:
-		return fmt.Sprintf("Formatter.float(param.%s, %s, options?.wrappingElement?.['%s'])", key, r.numericOptions(key, format), key)
+		ret := fmt.Sprintf("Formatter.float(param.%s, %s, options?.wrappingElement?.['%s'])", key, r.numericOptions(key, format), key)
+		return ret, nil
 	case dictionary.IntTemplateKeyType:
-		return fmt.Sprintf("Formatter.int(param.%s, %s, options?.wrappingElement?.['%s'])", key, r.numericOptions(key, format), key)
+		ret := fmt.Sprintf("Formatter.int(param.%s, %s, options?.wrappingElement?.['%s'])", key, r.numericOptions(key, format), key)
+		return ret, nil
 	case dictionary.BoolTemplateKeyType:
-		return r.formatBool(key, format)
+		return r.formatBool(key, format), nil
 	case dictionary.PluralTemplateKeyType:
 		return r.formatPlural(language, key, format)
 	default:
-		return fmt.Sprintf("Formatter.string(param.%s, options?.wrappingElement?.['%s'])", key, key)
+		return fmt.Sprintf("Formatter.string(param.%s, options?.wrappingElement?.['%s'])", key, key), nil
 	}
 }
 
@@ -38,10 +41,13 @@ func (r reactArgumentFormatter) formatBool(key string, format dictionary.Templat
 	}
 }
 
-func (t reactArgumentFormatter) formatPlural(language, key string, format dictionary.TemplateKeyFormat) string {
+func (r reactArgumentFormatter) formatPlural(language, key string, format dictionary.TemplateKeyFormat) (string, error) {
 	options := format.Option.([]string)
-	optArray := strings.Join(options, ",")
-	return fmt.Sprintf(`Formatter.plural(param.%s, "%s", [%s])`, key, language, optArray)
+	optArray := strings.Join(options, `","`)
+	if !checkPluralOptionLength(format, language, r.metadata) {
+		return "", errors.New("plural option length does not match")
+	}
+	return fmt.Sprintf(`Formatter.plural(param.%s, "%s", ["%s"])`, key, language, optArray), nil
 }
 
 func (r reactArgumentFormatter) numericOptions(key string, format dictionary.TemplateKeyFormat) string {
