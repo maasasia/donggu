@@ -1,4 +1,4 @@
-package exporter
+package golang
 
 import (
 	"fmt"
@@ -19,6 +19,8 @@ func (g golangArgumentFormatter) ArgumentType(key string, argType dictionary.Tem
 		paramArg = callArg.Clone().Float32()
 	case dictionary.BoolTemplateKeyType:
 		paramArg = callArg.Clone().Bool()
+	case dictionary.PluralTemplateKeyType:
+		paramArg = callArg.Clone().Int()
 	default:
 		paramArg = callArg.Clone().String()
 	}

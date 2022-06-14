@@ -1,8 +1,9 @@
-package exporter
+package golang
 
 import (
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/dave/jennifer/jen"
@@ -93,6 +94,11 @@ func (g *golangCodeBuilder) outputLanguageFile(w io.Writer, metadata dictionary.
 		jen.Map(jen.String()).Struct(jen.Bool()),
 		jen.Values(languageSet),
 	)
+
+	for _, lang := range metadata.SupportedLanguages {
+		file.Add(g.writePluralSelectorImpl(lang, &metadata))
+	}
+
 	if err := file.Render(w); err != nil {
 		return errors.Wrap(err, "failed to render language.go")
 	}
@@ -174,6 +180,34 @@ func (g *golangCodeBuilder) writeEntryImpl(key dictionary.EntryKey, locale strin
 	g.dataImplStmt.Add(fnDef, jen.Line())
 }
 
+func (g *golangCodeBuilder) writePluralSelectorImpl(language string, metadata *dictionary.Metadata) *jen.Statement {
+	defs, defsOk := metadata.Plurals[language]
+	if !defsOk {
+		defs = dictionary.DefaultPluralDefinition()
+	}
+	fmt.Println(defs)
+	fnName := g.pluralSelectorFnName(language)
+
+	defCode := []jen.Code{}
+	for index, def := range defs {
+		if def.HasOperand {
+			block := jen.If(jen.Id("value").Op(def.Op).Lit(def.Operand).Op("==").Lit(def.Equals)).Block(
+				jen.Return(jen.Id("choices").Index(jen.Lit(index))),
+			)
+			defCode = append(defCode, block)
+		} else {
+			block := jen.If(jen.Id("value").Op(def.Op).Lit(def.Equals)).Block(
+				jen.Return(jen.Id("choices").Index(jen.Lit(index))),
+			)
+			defCode = append(defCode, block)
+		}
+	}
+	defCode = append(defCode, jen.Return(jen.Id("choices").Index(jen.Lit(len(defs)))))
+
+	fnBody := jen.Func().Id(fnName).Params(jen.Id("value").Int(), jen.Id("choices").Index().String()).String().Block(defCode...)
+	return fnBody
+}
+
 func (g golangCodeBuilder) nodeStructName(key dictionary.EntryKey) string {
 	return "d_" + key.PascalCase()
 }
@@ -192,4 +226,8 @@ func (g golangCodeBuilder) entryFormatTypeName(key dictionary.EntryKey) string {
 
 func (g golangCodeBuilder) entryFormatFnName(key dictionary.EntryKey, locale string) string {
 	return "d_" + key.PascalCase() + "_Fmt_" + code.ToPascalCase(locale)
+}
+
+func (g golangCodeBuilder) pluralSelectorFnName(language string) string {
+	return "l_plural_" + strings.ReplaceAll(language, "-", "_")
 }

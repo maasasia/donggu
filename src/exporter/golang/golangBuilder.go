@@ -1,4 +1,4 @@
-package exporter
+package golang
 
 import (
 	"os"
@@ -11,13 +11,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-type golangBuilder struct {
+type GolangBuilder struct {
 	builder          *golangCodeBuilder
 	contentValidator dictionary.ContentValidator
 }
 
-func newGolangBuilder(metadata dictionary.Metadata) *golangBuilder {
-	return &golangBuilder{
+func NewGolangBuilder(metadata dictionary.Metadata) *GolangBuilder {
+	return &GolangBuilder{
 		builder: newGolangCodeBuilder(),
 		contentValidator: dictionary.NewContentValidator(metadata, dictionary.ContentValidationOptions{
 			SkipLangSupportCheck: true,
@@ -25,7 +25,7 @@ func newGolangBuilder(metadata dictionary.Metadata) *golangBuilder {
 	}
 }
 
-func (g *golangBuilder) Build(metadata dictionary.Metadata, projectRoot string) error {
+func (g *GolangBuilder) Build(metadata dictionary.Metadata, projectRoot string) error {
 	now := time.Now()
 
 	operations := map[string]func(f *os.File) error{
@@ -54,7 +54,7 @@ func (g *golangBuilder) Build(metadata dictionary.Metadata, projectRoot string) 
 	return nil
 }
 
-func (g *golangBuilder) openFile(projectRoot, filename string) (*os.File, error) {
+func (g *GolangBuilder) openFile(projectRoot, filename string) (*os.File, error) {
 	f, err := os.OpenFile(
 		path.Join(projectRoot, "generated", filename),
 		os.O_CREATE|os.O_TRUNC|os.O_RDWR,
@@ -66,11 +66,11 @@ func (g *golangBuilder) openFile(projectRoot, filename string) (*os.File, error)
 	return f, err
 }
 
-func (g *golangBuilder) Run(content *dictionary.ContentNode) error {
+func (g *GolangBuilder) Run(content *dictionary.ContentNode) error {
 	return g.walk(content, dictionary.EntryKey(""), nil, 0)
 }
 
-func (g *golangBuilder) walk(
+func (g *GolangBuilder) walk(
 	contentNode *dictionary.ContentNode,
 	positionKey dictionary.EntryKey,
 	selfNameEntry dictionary.Entry,
@@ -115,7 +115,7 @@ func (g *golangBuilder) walk(
 	return nil
 }
 
-func (g *golangBuilder) addEntry(entry dictionary.Entry, entryKey dictionary.EntryKey, isSelfEntry bool) (err error) {
+func (g *GolangBuilder) addEntry(entry dictionary.Entry, entryKey dictionary.EntryKey, isSelfEntry bool) (err error) {
 	templateKeys, validateErr := g.contentValidator.Validate(entry)
 	if validateErr != nil {
 		err = errors.Wrap(validateErr, "failed to add leaf")
@@ -138,7 +138,7 @@ func (g *golangBuilder) addEntry(entry dictionary.Entry, entryKey dictionary.Ent
 	return
 }
 
-func (g *golangBuilder) buildEntryArgumentBlock(argTypes map[string]dictionary.TemplateKeyFormat) (callArgs, paramArgs []jen.Code) {
+func (g *GolangBuilder) buildEntryArgumentBlock(argTypes map[string]dictionary.TemplateKeyFormat) (callArgs, paramArgs []jen.Code) {
 	callArgs = make([]jen.Code, 0, len(argTypes))
 	paramArgs = make([]jen.Code, 0, len(argTypes))
 	for k, v := range argTypes {
@@ -148,7 +148,7 @@ func (g *golangBuilder) buildEntryArgumentBlock(argTypes map[string]dictionary.T
 	}
 	return
 }
-func (g *golangBuilder) writeNodeToBuilder(
+func (g *GolangBuilder) writeNodeToBuilder(
 	parentKey dictionary.EntryKey,
 	childPropertyNames *map[string]struct{},
 	isRoot bool,
@@ -161,7 +161,7 @@ func (g *golangBuilder) writeNodeToBuilder(
 	}
 }
 
-func (g *golangBuilder) buildFormatterReturnValue(
+func (g *GolangBuilder) buildFormatterReturnValue(
 	entry dictionary.Entry,
 	lang string,
 	argTypes map[string]dictionary.TemplateKeyFormat,
