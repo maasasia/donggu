@@ -13,12 +13,14 @@ import (
 
 type GolangBuilder struct {
 	builder          *golangCodeBuilder
+	metadata         *dictionary.Metadata
 	contentValidator dictionary.ContentValidator
 }
 
 func NewGolangBuilder(metadata dictionary.Metadata) *GolangBuilder {
 	return &GolangBuilder{
-		builder: newGolangCodeBuilder(),
+		builder:  newGolangCodeBuilder(),
+		metadata: &metadata,
 		contentValidator: dictionary.NewContentValidator(metadata, dictionary.ContentValidationOptions{
 			SkipLangSupportCheck: true,
 		}),
@@ -142,7 +144,7 @@ func (g *GolangBuilder) buildEntryArgumentBlock(argTypes map[string]dictionary.T
 	callArgs = make([]jen.Code, 0, len(argTypes))
 	paramArgs = make([]jen.Code, 0, len(argTypes))
 	for k, v := range argTypes {
-		callArg, paramArg := golangArgumentFormatter{}.ArgumentType(code.TemplateKeyToCamelCase(k), v)
+		callArg, paramArg := golangArgumentFormatter{metadata: g.metadata}.ArgumentType(code.TemplateKeyToCamelCase(k), v)
 		callArgs = append(callArgs, callArg)
 		paramArgs = append(paramArgs, paramArg)
 	}
@@ -168,7 +170,7 @@ func (g *GolangBuilder) buildFormatterReturnValue(
 ) (*jen.Statement, error) {
 	params := make([]jen.Code, 1)
 	templateString, err := entry.ReplacedTemplateValue(lang, func(key string, format dictionary.TemplateKeyFormat) (string, error) {
-		formatString, argValue := golangArgumentFormatter{}.Format(key, format)
+		formatString, argValue := golangArgumentFormatter{}.Format(lang, key, format)
 		params = append(params, argValue)
 		return formatString, nil
 	})
