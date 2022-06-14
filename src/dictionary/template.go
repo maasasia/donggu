@@ -67,8 +67,10 @@ func ParseTemplateKeyFormat(kind, option string) (TemplateKeyFormat, error) {
 		return parseStringFormat(option)
 	case PluralTemplateKeyType:
 		return parsePluralFormat(option)
+	case "":
+		return TemplateKeyFormat{Kind: StringTemplateKeyType}, nil
 	default:
-		return TemplateKeyFormat{}, errors.Errorf("Unknown template parameter type '%s'", kind)
+		return TemplateKeyFormat{}, errors.Errorf("unknown template parameter type '%s'", kind)
 	}
 }
 

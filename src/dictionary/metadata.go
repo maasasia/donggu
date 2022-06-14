@@ -14,6 +14,8 @@ type PluralDefinition struct {
 
 func (p PluralDefinition) Valid() error {
 	switch p.Op {
+	case "==":
+		fallthrough
 	case "<":
 		fallthrough
 	case "<=":
@@ -21,7 +23,7 @@ func (p PluralDefinition) Valid() error {
 	case ">":
 		fallthrough
 	case ">=":
-		return p.validateIneq()
+		return p.validateCmp()
 	case "%":
 		return p.validateMod()
 	case "/":
@@ -31,12 +33,12 @@ func (p PluralDefinition) Valid() error {
 	}
 }
 
-func (p PluralDefinition) validateIneq() error {
+func (p PluralDefinition) validateCmp() error {
 	if p.HasOperand {
 		return errors.Errorf("operator '%s' should not have operand", p.Op)
 	}
-	if p.Equals <= 0 {
-		return errors.New("value must be greater than zero")
+	if p.Equals < 0 {
+		return errors.New("value should not be negative")
 	}
 	return nil
 }
@@ -45,8 +47,8 @@ func (p PluralDefinition) validateMod() error {
 	if !p.HasOperand {
 		return errors.Errorf("operator '%s' should have operand", p.Op)
 	}
-	if p.Operand <= 0 {
-		return errors.New("operand must be greater than zero")
+	if p.Operand < 0 {
+		return errors.New("operand must not be negative")
 	}
 	if p.Operand <= p.Equals || p.Equals < 0 {
 		return errors.New("value is an invalid modulo value")
@@ -147,4 +149,10 @@ func (m Metadata) validatePlurals(languages *map[string]struct{}) (err *multierr
 		}
 	}
 	return
+}
+
+func DefaultPluralDefinition() []PluralDefinition {
+	return []PluralDefinition{
+		{Op: "==", Equals: 1},
+	}
 }

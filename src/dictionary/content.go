@@ -40,15 +40,11 @@ func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
 		if _, exists := templates[groups[1]]; exists {
 			return map[string]TemplateKeyFormat{}, errors.Errorf("duplicate template key '%s'", groups[1])
 		}
-		if groups[2] == "" {
-			templates[groups[1]] = TemplateKeyFormat{Kind: StringTemplateKeyType}
-		} else {
-			keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
-			if err != nil {
-				return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
-			}
-			templates[groups[1]] = keyFormat
+		keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
+		if err != nil {
+			return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
 		}
+		templates[groups[1]] = keyFormat
 	}
 	return templates, nil
 }
@@ -58,6 +54,7 @@ func (e Entry) ReplacedTemplateValue(key string, replaceFn func(string, Template
 	replaced := templateParenRegex.ReplaceAllStringFunc(e[key], func(from string) string {
 		itemMatch := templateOptionRegex.FindAllStringSubmatch(from, -1)
 		groups := itemMatch[0]
+
 		keyFormat, keyErr := ParseTemplateKeyFormat(groups[2], groups[3])
 		if keyErr != nil {
 			err = keyErr

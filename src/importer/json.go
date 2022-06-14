@@ -13,7 +13,7 @@ import (
 )
 
 // Regular expression for validating plural operators
-var pluralOperatorRegex = regexp.MustCompile(`^([<>]=?)|(?:(%|\/)([1-9]\d*))$`)
+var pluralOperatorRegex = regexp.MustCompile(`^([<>]=?|==)|(?:(%|\/)([1-9]\d*))$`)
 
 type jsonPluralDefinition struct {
 	Op    string `json:"op"`
