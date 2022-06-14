@@ -37,14 +37,17 @@ func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
 			return map[string]TemplateKeyFormat{}, errors.Errorf("invalid template format '%s'", template)
 		}
 		groups := itemMatch[0]
-		if _, exists := templates[groups[1]]; exists {
-			return map[string]TemplateKeyFormat{}, errors.Errorf("duplicate template key '%s'", groups[1])
-		}
 		keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
 		if err != nil {
 			return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
 		}
-		templates[groups[1]] = keyFormat
+		if existingFormat, exists := templates[groups[1]]; exists {
+			if !keyTypesCompatible(existingFormat.Kind, keyFormat.Kind) {
+				return map[string]TemplateKeyFormat{}, errors.Errorf("incompatible types '%s' and '%s' for key '%s'", existingFormat.Kind, keyFormat.Kind, groups[1])
+			}
+		} else {
+			templates[groups[1]] = keyFormat
+		}
 	}
 	return templates, nil
 }

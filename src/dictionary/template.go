@@ -25,6 +25,14 @@ const (
 	PluralTemplateKeyType TemplateKeyType = "plural"
 )
 
+var typeCompatMatrix = map[TemplateKeyType]map[TemplateKeyType]struct{}{
+	BoolTemplateKeyType:   {BoolTemplateKeyType: struct{}{}},
+	FloatTemplateKeyType:  {FloatTemplateKeyType: struct{}{}},
+	IntTemplateKeyType:    {IntTemplateKeyType: struct{}{}, PluralTemplateKeyType: struct{}{}},
+	StringTemplateKeyType: {StringTemplateKeyType: struct{}{}},
+	PluralTemplateKeyType: {PluralTemplateKeyType: struct{}{}, IntTemplateKeyType: struct{}{}},
+}
+
 type TemplateKeyFormat struct {
 	Kind   TemplateKeyType
 	Option interface{}
@@ -172,4 +180,9 @@ func parseNumericFormat(option string) (NumericTemplateFormatOption, error) {
 	}
 
 	return result, nil
+}
+
+func keyTypesCompatible(k1, k2 TemplateKeyType) bool {
+	_, ok := typeCompatMatrix[k1][k2]
+	return ok
 }
