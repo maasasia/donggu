@@ -114,7 +114,7 @@ donggu init
 이해할 위험을 줄일 수 있습니다. `context`는 필수가 아니며, 생성되는 라이브러리 코드에 포함되지 않습니다.
 
 
-### 메타데이터 파일
+### 메타데이터 파일 <span id="usage-metadata"></span>
 
 메타데이터 파일은 아래와 같은 필드로 이루어져 있습니다.
 
@@ -122,6 +122,7 @@ donggu init
 - `required_languages`: 모든 텍스트 항목이 지원해야 하는 언어들입니다. 여기에 있는 언어들은 모두 `supported_languages`에 포함되어 있어야 합니다.
 - `version`: 프로젝트의 버전입니다. 라이브러리 코드를 생성할 때 이 값을 이용합니다.
 - `exporter_options` (선택): 내보내기 형식별로 필요한 설정입니다. 내보내기 형식별로 필요한 설정은 다르며, [코드 생성](#)과 [내보내기와 들여오기](#)에 정리되어 있습니다.
+- `plurals` (선택): 언어별 복수형의 정의입니다.
 
 ```json
 {
@@ -132,7 +133,12 @@ donggu init
   },
   "required_languages": ["ko", "en"],
   "supported_languages": ["ko", "en", "ja"],
-  "version": "0.1.3"
+  "version": "0.1.3",
+  "plurals": {
+    "ko": [
+      {"op": "==", "value": 1}
+    ]
+  }
 }
 ```
 위의 예시를 설명하면, 이 프로젝트는
@@ -140,6 +146,42 @@ donggu init
 - 한국어, 영어는 모든 텍스트가 번역되어 있지만 일본어는 일부만 지원하고
 - 버전은 0.1.3입니다.
 - Typescript 패키지를 만들 때는 패키지명으로 `@maasasia/translation-alpaca`를 사용합니다.
+
+#### 복수형 정의
+메타데이터 파일의 `plurals` 필드에는 언어별 복수형을 정의할 수 있습니다. 이 정의는 `plural` 템플릿 자료형에 사용됩니다.
+`supported_languages`에 포함된 언어에 대해 복수형을 정의할 수 있습니다. 정의는 아래와 같이 `op`, `value`로 이루어진 object의 배열로 이루어집니다.
+```json
+[
+  {"op": "==", "value": 1},
+  {"op": "<=", "value": 2},
+]
+```
+`op`에 가능한 값은 다음과 같습니다.
+- `==`: `value`와 일치 (`test == value`)
+- `<=`, `<`, `>`, `>=`: `value`와 비교 (`test <= value`, ...)
+- `%div`: `div`로 나눈 나머지가 `value`와 일치 (`test%div == value`)
+- `/div`: `div`로 나눈 몫이 `value`와 일치 (`test/div == `value`)
+
+어떤 값의 복수형을 판별할때는 배열의 순서대로 값이 조건을 만족하는지 확인하고, 첫번째로 만족하는 조건을 복수형으로 판단합니다.
+
+위의 경우, 어떤 정수 `test`의 복수형을 판단하는 로직은 아래와 같은 코드로 변환된다고 볼 수 있습니다.
+```cpp
+int findPluralCase(int test) {
+  if (test == 1) {
+    return 0;
+  }
+  if (test <= 2) {
+    return 1;
+  }
+  return 2;
+}
+```
+복수형을 지정하지 않을 경우에는 아래와 같은 정의가 사용됩니다. (1개인 경우만 단수로 취급)
+```json
+[
+  {"op": "==", "value": 1}
+]
+```
 
 ### CLI로 프로젝트 생성
 위와 같은 프로젝트 구성은 동구를 이용해 자동으로 생성할 수 있습니다. 프로젝트를 만들고 싶은 폴더로 이동해
@@ -179,6 +221,7 @@ Donggu.ticket.issued({ ticketName: "30일 탑승권" });
 - 정수: `int`
 - 실수: `float`
 - 부울: `bool`
+- 단, 복수 선택: `plural`
 
 ### 템플릿 포맷
 템플릿에 들어가는 값의 포맷을 지정할 수 있습니다.
@@ -236,6 +279,28 @@ Donggu.ticket.issued({ ticketName: "30일 탑승권" });
 
 #### `string` 포맷
 `string`은 포맷을 지원하지 않습니다.
+
+#### `plural` 포맷
+`plural` 포맷은 단수, 복수에 따라 다른 텍스트를 표시할 수 있도록 합니다.
+언어별 복수형은 프로젝트의 메타데이터 파일에 정의됩니다. 메타데이터에 복수형을 정의하는 방법은 [메타데이터 사용법](#usage-metadata)을 참고하세요.
+
+포맷에는 언어별로 정의한 복수형별로 표시할 값을 쉼표로 분리해 작성합니다.
+예를 들어 `ar` 언어의 복수형 정의가 아래와 같이 되어있다면,
+```
+"ar": [
+  {"op": "==", "value": 0},
+  {"op": "==", "value": 1},
+  {"op": "==", "value": 2},
+  {"op": "<=", "value": 10},
+  {"op": "<", "value": 100}
+]
+```
+템플릿을 사용할 때에는 `#{VALUE|plural|zero,one,two,few,many,other}` 형태로 적어주어야 합니다.
+포맷에 적어준 값은 각각 `0`, `1`, `2`, `3~10`, `11~99`, `100 이상(나머지 경우)`일때 사용됩니다.
+
+같은 키에 대해 `plural`을 `int`와 동시에 사용할 수 있습니다. `plural`만 사용할 경우에는 템플릿의 값으로 정수형 값이 필요합니다.
+- `Choose #{CHOICES|plural|an item,items}.`
+- `You have #{COUNT|int} #{COUNT|plural|message,messages}.`
 
 
 ## 라이브러리 코드 생성 <span id="usage-codegen"></span>
