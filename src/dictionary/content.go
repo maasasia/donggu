@@ -11,7 +11,7 @@ import (
 
 const (
 	TemplateParenPattern  = "#{(.*?)}"
-	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool)(?:\|(.*?))?)?}`
+	TemplateOptionPattern = `#{([A-Z0-9_]+)(?:\|(string|int|float|bool|plural)(?:\|(.*?))?)?}`
 )
 
 var templateParenRegex = regexp.MustCompile(TemplateParenPattern)
@@ -37,29 +37,40 @@ func (e Entry) TemplateKeys(key string) (map[string]TemplateKeyFormat, error) {
 			return map[string]TemplateKeyFormat{}, errors.Errorf("invalid template format '%s'", template)
 		}
 		groups := itemMatch[0]
-		if _, exists := templates[groups[1]]; exists {
-			return map[string]TemplateKeyFormat{}, errors.Errorf("duplicate template key '%s'", groups[1])
+		keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
+		if err != nil {
+			return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
 		}
-		if groups[2] == "" {
-			templates[groups[1]] = TemplateKeyFormat{Kind: StringTemplateKeyType}
-		} else {
-			keyFormat, err := ParseTemplateKeyFormat(groups[2], groups[3])
-			if err != nil {
-				return map[string]TemplateKeyFormat{}, errors.Wrapf(err, "parse template key '%s' failed", groups[1])
+		if existingFormat, exists := templates[groups[1]]; exists {
+			if !keyTypesCompatible(existingFormat.Kind, keyFormat.Kind) {
+				return map[string]TemplateKeyFormat{}, errors.Errorf("incompatible types '%s' and '%s' for key '%s'", existingFormat.Kind, keyFormat.Kind, groups[1])
 			}
+		} else {
 			templates[groups[1]] = keyFormat
 		}
 	}
 	return templates, nil
 }
 
-func (e Entry) ReplacedTemplateValue(key string, replaceFn func(string, TemplateKeyFormat) string) string {
-	return templateParenRegex.ReplaceAllStringFunc(e[key], func(from string) string {
+func (e Entry) ReplacedTemplateValue(key string, replaceFn func(string, TemplateKeyFormat) (string, error)) (string, error) {
+	var err error = nil
+	replaced := templateParenRegex.ReplaceAllStringFunc(e[key], func(from string) string {
 		itemMatch := templateOptionRegex.FindAllStringSubmatch(from, -1)
 		groups := itemMatch[0]
-		keyFormat, _ := ParseTemplateKeyFormat(groups[2], groups[3])
-		return replaceFn(groups[1], keyFormat)
+
+		keyFormat, keyErr := ParseTemplateKeyFormat(groups[2], groups[3])
+		if keyErr != nil {
+			err = keyErr
+			return from
+		}
+		replaced, replaceErr := replaceFn(groups[1], keyFormat)
+		if replaceErr != nil {
+			err = replaceErr
+			return from
+		}
+		return replaced
 	})
+	return replaced, err
 }
 
 func (e Entry) String() string {

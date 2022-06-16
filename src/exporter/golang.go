@@ -7,6 +7,7 @@ import (
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
+	"github.com/maasasia/donggu/exporter/golang"
 	"github.com/maasasia/donggu/util"
 	"github.com/pkg/errors"
 )
@@ -25,7 +26,7 @@ func (g GolangDictionaryExporter) Export(
 		return errors.Wrap(err, "failed to prepare project")
 	}
 
-	builder := newGolangBuilder(metadata)
+	builder := golang.NewGolangBuilder(metadata)
 	if err := builder.Run(content.ToTree()); err != nil {
 		return err
 	}

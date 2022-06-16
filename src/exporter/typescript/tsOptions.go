@@ -7,16 +7,24 @@ import (
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
 	"github.com/maasasia/donggu/util"
+	"github.com/pkg/errors"
 )
 
-type TypescriptBuilderOptions struct{ shortener util.Shortener }
+type TypescriptBuilderOptions struct {
+	shortener util.Shortener
+	metadata  *dictionary.Metadata
+}
 
 func (t *TypescriptBuilderOptions) SetShortener(shortener util.Shortener) {
 	t.shortener = shortener
 }
 
+func (t *TypescriptBuilderOptions) SetMetadata(metadata *dictionary.Metadata) {
+	t.metadata = metadata
+}
+
 func (t TypescriptBuilderOptions) ArgFormatter() ArgumentFormatter {
-	return typescriptArgumentFormatter{}
+	return typescriptArgumentFormatter{metadata: t.metadata}
 }
 
 func (t TypescriptBuilderOptions) WriteHeader(builder *code.IndentedCodeBuilder) {
@@ -50,15 +58,22 @@ func (t TypescriptBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuild
 	}
 }
 
-func (t TypescriptBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) {
+func (t TypescriptBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) error {
 	templateString = escapeTemplateStringLiteral(templateString)
 	if argType == "" {
 		builder.AppendLines(fmt.Sprintf("\"%s\": () => `%s`,", language, templateString))
 	} else {
-		templateString := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) string {
-			call := typescriptArgumentFormatter{}.Format(key, format)
-			return "${" + call + "}"
+		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) (string, error) {
+			call, callErr := t.ArgFormatter().Format(language, key, format)
+			if callErr != nil {
+				return "", errors.Wrapf(callErr, "failed to format template '%s'", key)
+			}
+			return "${" + call + "}", nil
 		})
+		if err != nil {
+			return errors.Wrap(err, "failed to parse template parameter")
+		}
 		builder.AppendLines(fmt.Sprintf("\"%s\": (param: %s) => `%s`,", language, argType, templateString))
 	}
+	return nil
 }

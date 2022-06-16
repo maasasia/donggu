@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/maasasia/donggu/dictionary"
@@ -17,7 +18,7 @@ func wrapExecCommand(exec func(cmd *cobra.Command, args []string) error) func(cm
 	return func(cmd *cobra.Command, args []string) {
 		startTime := time.Now()
 		if err := exec(cmd, args); err != nil {
-			fmt.Printf("🚫 Failed to run command.\n%s\n", err)
+			fmt.Printf("🚫 Failed to run command.\n%s\n", strings.TrimSpace(err.Error()))
 			os.Exit(1)
 		} else {
 			duration := time.Since(startTime).Seconds()

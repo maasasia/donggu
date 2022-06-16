@@ -15,7 +15,12 @@ func execExportCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	validateErr := content.Validate(meta, dictionary.ContentValidationOptions{})
+
+	validateErr := meta.Validate()
+	if validateErr != nil {
+		return errors.Wrap(validateErr, "metadata file has errors")
+	}
+	validateErr = content.Validate(meta, dictionary.ContentValidationOptions{})
 	if validateErr != nil {
 		return errors.Wrap(validateErr, "content file has errors")
 	}

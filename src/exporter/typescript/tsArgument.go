@@ -2,13 +2,17 @@ package typescript
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
 )
 
-type typescriptArgumentFormatter struct{}
+type typescriptArgumentFormatter struct {
+	metadata *dictionary.Metadata
+}
 
 type typescriptNumericFormatJsonMarshal struct {
 	PadCharacter   *string `json:"padCharacter"`
@@ -26,22 +30,26 @@ func (t typescriptArgumentFormatter) ArgumentType(format dictionary.TemplateKeyF
 		return "number"
 	case dictionary.BoolTemplateKeyType:
 		return "boolean"
+	case dictionary.PluralTemplateKeyType:
+		return "number"
 	default:
 		return "string"
 	}
 }
 
-func (t typescriptArgumentFormatter) Format(key string, format dictionary.TemplateKeyFormat) string {
+func (t typescriptArgumentFormatter) Format(language, key string, format dictionary.TemplateKeyFormat) (string, error) {
 	key = code.TemplateKeyToCamelCase(key)
 	switch format.Kind {
 	case dictionary.FloatTemplateKeyType:
-		return fmt.Sprintf("Formatter.float(param.%s, %s)", key, t.numericOptions(key, format))
+		return fmt.Sprintf("Formatter.float(param.%s, %s)", key, t.numericOptions(key, format)), nil
 	case dictionary.IntTemplateKeyType:
-		return fmt.Sprintf("Formatter.int(param.%s, %s)", key, t.numericOptions(key, format))
+		return fmt.Sprintf("Formatter.int(param.%s, %s)", key, t.numericOptions(key, format)), nil
 	case dictionary.BoolTemplateKeyType:
-		return t.formatBool(key, format)
+		return t.formatBool(key, format), nil
+	case dictionary.PluralTemplateKeyType:
+		return t.formatPlural(language, key, format)
 	default:
-		return fmt.Sprintf("param.%s", key)
+		return fmt.Sprintf("param.%s", key), nil
 	}
 }
 
@@ -52,6 +60,15 @@ func (t typescriptArgumentFormatter) formatBool(key string, format dictionary.Te
 	} else {
 		return fmt.Sprintf("param.%s ? `%s` : `%s`", key, options.TrueValue, options.FalseValue)
 	}
+}
+
+func (t typescriptArgumentFormatter) formatPlural(language, key string, format dictionary.TemplateKeyFormat) (string, error) {
+	options := format.Option.([]string)
+	optArray := strings.Join(options, `","`)
+	if !checkPluralOptionLength(format, language, t.metadata) {
+		return "", errors.New("plural option length does not match")
+	}
+	return fmt.Sprintf(`Formatter.plural(param.%s, "%s", ["%s"])`, key, language, optArray), nil
 }
 
 func (t typescriptArgumentFormatter) numericOptions(key string, format dictionary.TemplateKeyFormat) string {

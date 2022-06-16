@@ -1,4 +1,4 @@
-package exporter
+package golang
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dave/jennifer/jen"
-	"github.com/maasasia/donggu/code"
 	"github.com/maasasia/donggu/dictionary"
 	"github.com/pkg/errors"
 )
@@ -93,6 +92,11 @@ func (g *golangCodeBuilder) outputLanguageFile(w io.Writer, metadata dictionary.
 		jen.Map(jen.String()).Struct(jen.Bool()),
 		jen.Values(languageSet),
 	)
+
+	for _, lang := range metadata.SupportedLanguages {
+		file.Add(g.writePluralSelectorImpl(lang, &metadata))
+	}
+
 	if err := file.Render(w); err != nil {
 		return errors.Wrap(err, "failed to render language.go")
 	}
@@ -111,16 +115,16 @@ func (g *golangCodeBuilder) writeHeader(w io.Writer, now time.Time) error {
 }
 
 func (g *golangCodeBuilder) writeNodeType(key dictionary.EntryKey) {
-	structName := g.nodeStructName(key)
+	structName := nodeStructName(key)
 	g.nodeTypeStmt.Add(jen.Type().Id(structName).Struct(
 		jen.Id("cb").Op("*").Id("Donggu"),
 	), jen.Line())
 }
 
 func (g *golangCodeBuilder) writeNodeChild(key dictionary.EntryKey, child string, isRoot bool) {
-	structName := g.nodeStructName(key)
-	methodName := g.nodeMethodChildName(child)
-	returnTypeName := g.nodeStructName(key.NewChild(child))
+	structName := nodeStructName(key)
+	methodName := nodeMethodChildName(child)
+	returnTypeName := nodeStructName(key.NewChild(child))
 
 	var methodBody *jen.Statement
 	var methodRecv *jen.Statement
@@ -137,9 +141,9 @@ func (g *golangCodeBuilder) writeNodeChild(key dictionary.EntryKey, child string
 }
 
 func (g *golangCodeBuilder) writeEntryMethod(key dictionary.EntryKey, paramArgs, callArgs []jen.Code) {
-	structName := g.nodeStructName(key.Parent())
-	methodName := g.nodeMethodChildName(key.LastPart())
-	fnType := g.entryFormatTypeName(key)
+	structName := nodeStructName(key.Parent())
+	methodName := nodeMethodChildName(key.LastPart())
+	fnType := entryFormatTypeName(key)
 
 	fnSignature := jen.Func().Params(jen.Id("d").Id(structName)).Id(methodName)
 	fnSignature = fnSignature.Params(paramArgs...).String()
@@ -157,14 +161,14 @@ func (g *golangCodeBuilder) writeEntryMethod(key dictionary.EntryKey, paramArgs,
 }
 
 func (g *golangCodeBuilder) writeEntryType(key dictionary.EntryKey, paramArgs []jen.Code) {
-	fnType := g.entryFormatTypeName(key)
+	fnType := entryFormatTypeName(key)
 	structCode := jen.Type().Id(fnType).Func().Params(paramArgs...).String()
 	g.dataImplTypes = append(g.dataImplTypes, structCode)
 }
 
 func (g *golangCodeBuilder) writeEntryImpl(key dictionary.EntryKey, locale string, paramArgs []jen.Code, impl *jen.Statement) {
-	fnName := g.entryFormatFnName(key, locale)
-	fnType := g.entryFormatTypeName(key)
+	fnName := entryFormatFnName(key, locale)
+	fnType := entryFormatTypeName(key)
 	if _, ok := g.dataMappings[string(key)]; !ok {
 		g.dataMappings[string(key)] = map[string]*jen.Statement{}
 	}
@@ -174,22 +178,29 @@ func (g *golangCodeBuilder) writeEntryImpl(key dictionary.EntryKey, locale strin
 	g.dataImplStmt.Add(fnDef, jen.Line())
 }
 
-func (g golangCodeBuilder) nodeStructName(key dictionary.EntryKey) string {
-	return "d_" + key.PascalCase()
-}
+func (g *golangCodeBuilder) writePluralSelectorImpl(language string, metadata *dictionary.Metadata) *jen.Statement {
+	defs, defsOk := metadata.Plurals[language]
+	if !defsOk {
+		defs = dictionary.DefaultPluralDefinition()
+	}
+	fnName := pluralSelectorFnName(language)
 
-func (g golangCodeBuilder) nodeMethodChildName(child string) string {
-	return code.ToPascalCase(child)
-}
+	defCode := []jen.Code{}
+	for index, def := range defs {
+		if def.HasOperand {
+			block := jen.If(jen.Id("value").Op(def.Op).Lit(def.Operand).Op("==").Lit(def.Equals)).Block(
+				jen.Return(jen.Id("choices").Index(jen.Lit(index))),
+			)
+			defCode = append(defCode, block)
+		} else {
+			block := jen.If(jen.Id("value").Op(def.Op).Lit(def.Equals)).Block(
+				jen.Return(jen.Id("choices").Index(jen.Lit(index))),
+			)
+			defCode = append(defCode, block)
+		}
+	}
+	defCode = append(defCode, jen.Return(jen.Id("choices").Index(jen.Lit(len(defs)))))
 
-func (g golangCodeBuilder) entryStructName(key dictionary.EntryKey) string {
-	return "d_" + key.PascalCase()
-}
-
-func (g golangCodeBuilder) entryFormatTypeName(key dictionary.EntryKey) string {
-	return "d_" + key.PascalCase() + "_Fmt"
-}
-
-func (g golangCodeBuilder) entryFormatFnName(key dictionary.EntryKey, locale string) string {
-	return "d_" + key.PascalCase() + "_Fmt_" + code.ToPascalCase(locale)
+	fnBody := jen.Func().Id(fnName).Params(jen.Id("value").Int(), jen.Id("choices").Index().String()).String().Block(defCode...)
+	return fnBody
 }

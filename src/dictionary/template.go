@@ -22,7 +22,16 @@ const (
 	FloatTemplateKeyType  TemplateKeyType = "float"
 	IntTemplateKeyType    TemplateKeyType = "int"
 	StringTemplateKeyType TemplateKeyType = "string"
+	PluralTemplateKeyType TemplateKeyType = "plural"
 )
+
+var typeCompatMatrix = map[TemplateKeyType]map[TemplateKeyType]struct{}{
+	BoolTemplateKeyType:   {BoolTemplateKeyType: struct{}{}},
+	FloatTemplateKeyType:  {FloatTemplateKeyType: struct{}{}},
+	IntTemplateKeyType:    {IntTemplateKeyType: struct{}{}, PluralTemplateKeyType: struct{}{}},
+	StringTemplateKeyType: {StringTemplateKeyType: struct{}{}},
+	PluralTemplateKeyType: {PluralTemplateKeyType: struct{}{}, IntTemplateKeyType: struct{}{}},
+}
 
 type TemplateKeyFormat struct {
 	Kind   TemplateKeyType
@@ -64,9 +73,20 @@ func ParseTemplateKeyFormat(kind, option string) (TemplateKeyFormat, error) {
 		return parseFloatFormat(option)
 	case StringTemplateKeyType:
 		return parseStringFormat(option)
+	case PluralTemplateKeyType:
+		return parsePluralFormat(option)
+	case "":
+		return TemplateKeyFormat{Kind: StringTemplateKeyType}, nil
 	default:
-		return TemplateKeyFormat{}, errors.Errorf("Unknown template parameter type '%s'", kind)
+		return TemplateKeyFormat{}, errors.Errorf("unknown template parameter type '%s'", kind)
 	}
+}
+
+func parsePluralFormat(option string) (TemplateKeyFormat, error) {
+	return TemplateKeyFormat{
+		Kind:   PluralTemplateKeyType,
+		Option: strings.Split(option, ","),
+	}, nil
 }
 
 func parseBoolFormat(option string) (TemplateKeyFormat, error) {
@@ -160,4 +180,9 @@ func parseNumericFormat(option string) (NumericTemplateFormatOption, error) {
 	}
 
 	return result, nil
+}
+
+func keyTypesCompatible(k1, k2 TemplateKeyType) bool {
+	_, ok := typeCompatMatrix[k1][k2]
+	return ok
 }

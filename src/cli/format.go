@@ -17,7 +17,11 @@ func execFormatCommand(cmd *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "failed to load project")
 	}
 
-	validateErr := content.Validate(meta, dictionary.ContentValidationOptions{})
+	validateErr := meta.Validate()
+	if validateErr != nil {
+		return errors.Wrap(validateErr, "metadata file has errors")
+	}
+	validateErr = content.Validate(meta, dictionary.ContentValidationOptions{})
 	if validateErr != nil {
 		return errors.Wrap(validateErr, "content file has errors")
 	}

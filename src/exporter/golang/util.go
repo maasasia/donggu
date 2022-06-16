@@ -1,17 +1,6 @@
-package typescript
+package golang
 
-import (
-	"strings"
-
-	"github.com/maasasia/donggu/dictionary"
-)
-
-func escapeTemplateStringLiteral(str string) string {
-	str = strings.Replace(str, `\`, `\\`, -1)
-	str = strings.Replace(str, "${", "\\${", -1)
-	str = strings.Replace(str, "`", "\\`", -1)
-	return str
-}
+import "github.com/maasasia/donggu/dictionary"
 
 func checkPluralOptionLength(format dictionary.TemplateKeyFormat, language string, metadata *dictionary.Metadata) bool {
 	optionLength := len(format.Option.([]string))

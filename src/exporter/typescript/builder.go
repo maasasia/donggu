@@ -31,6 +31,7 @@ func NewTypescriptBuilder(metadata dictionary.Metadata, options BuilderOptions) 
 		shortener: util.NewCountingShortener(),
 	}
 	builder.options.SetShortener(builder.shortener)
+	builder.options.SetMetadata(&metadata)
 	return builder
 }
 
@@ -119,8 +120,9 @@ func (t *typescriptBuilder) addEntry(entry dictionary.Entry, entryKey dictionary
 		}
 		t.AddArgType(interfaceName, tsArgTypes)
 	}
-	t.writeEntryDataToBuilder(entryKey, interfaceName, entry)
-
+	if writeErr := t.writeEntryDataToBuilder(entryKey, interfaceName, entry); writeErr != nil {
+		err = errors.Wrap(writeErr, "failed to write entry data to builder")
+	}
 	return
 }
 
@@ -174,17 +176,21 @@ func (t *typescriptBuilder) writeNodeToBuilder(
 	t.nodeImplBuilder.AppendLines("}")
 }
 
-func (t *typescriptBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey, argType string, entry dictionary.Entry) {
+func (t *typescriptBuilder) writeEntryDataToBuilder(fullKey dictionary.EntryKey, argType string, entry dictionary.Entry) error {
 	t.dataBuilder.AppendLines(fmt.Sprintf(`"%s": {`, t.shortener.Shorten(string(fullKey))))
 	t.dataBuilder.Indent()
 	for lang, value := range entry {
 		if lang == "context" {
 			continue
 		}
-		t.options.WriteEntryData(&t.dataBuilder, argType, lang, value, entry)
+		err := t.options.WriteEntryData(&t.dataBuilder, argType, lang, value, entry)
+		if err != nil {
+			return errors.Wrap(err, "failed to write entry")
+		}
 	}
 	t.dataBuilder.Unindent()
 	t.dataBuilder.AppendLines("},")
+	return nil
 }
 
 func (t *typescriptBuilder) Build(metadata dictionary.Metadata, w io.Writer) {
@@ -196,6 +202,9 @@ func (t *typescriptBuilder) Build(metadata dictionary.Metadata, w io.Writer) {
 		fmt.Sprintf("export type Language = '%s';", strings.Join(metadata.SupportedLanguages, "' | '")),
 		"",
 	)
+
+	builder.AppendBlock(typescriptPluralBuilder{}.Build(metadata))
+	builder.AppendLines("")
 
 	builder.AppendLines("export const DATA = {")
 	builder.IndentedBlock(t.dataBuilder)

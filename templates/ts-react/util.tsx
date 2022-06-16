@@ -1,4 +1,5 @@
 import React from "react";
+import { Language, PLURALS } from "./generated/dictionary";
 
 interface FloatFormatterOptions {
     padCharacter: string | null;
@@ -26,6 +27,7 @@ export const Formatter = {
     bool: (v: boolean) => {
         return useWrapper(v ? 'yes' : 'no');
     },
+    plural: (v: number, lang: Language, values: string[]) => values[PLURALS[lang](v)],
 }
 
 function useWrapper(text: string, Wrap?: React.ComponentType<{children: React.ReactNode}>) {
