@@ -36,7 +36,7 @@ func (t ReactBuilderOptions) WriteHeader(builder *code.IndentedCodeBuilder) {
 		"",
 		`import { DictionaryFnItem, DictionaryNFnItem, EntryOptions } from "../types";`,
 		`import { Formatter, replaceLineBreak as rlb } from "../util";`,
-		`type ResolverFunc = (key: keyof typeof DATA, options?: EntryOptions, language?: Language) => string;`,
+		`type ResolverFunc = (key: keyof typeof DATA, params: unknown, options?: EntryOptions, language?: Language) => string;`,
 		"",
 	)
 }
@@ -51,10 +51,10 @@ func (t ReactBuilderOptions) WriteEntryType(builder *code.IndentedCodeBuilder, m
 
 func (t ReactBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuilder, methodName, interfaceName string, entryKey dictionary.EntryKey) {
 	if interfaceName == "" {
-		builder.AppendLines(fmt.Sprintf(`%s(options?: EntryOptions) { return this.cb("%s", options) }`, methodName, t.shortener.Shorten(string(entryKey))))
+		builder.AppendLines(fmt.Sprintf(`%s(options?: EntryOptions) { return this.cb("%s", undefined, options) }`, methodName, t.shortener.Shorten(string(entryKey))))
 	} else {
 		builder.AppendLines(
-			fmt.Sprintf(`%s(param: %s, options?: EntryOptions<%s>) { return this.cb("%s", options) }`,
+			fmt.Sprintf(`%s(param: %s, options?: EntryOptions<%s>) { return this.cb("%s", param, options) }`,
 				methodName, interfaceName, interfaceName, t.shortener.Shorten(string(entryKey))),
 		)
 	}
@@ -63,7 +63,7 @@ func (t ReactBuilderOptions) WriteEntryImpl(builder *code.IndentedCodeBuilder, m
 func (t ReactBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, argType, language, templateString string, entry dictionary.Entry) error {
 	templateString = escapeTemplateStringLiteral(templateString)
 	if argType == "" {
-		builder.AppendLines(fmt.Sprintf("\"%s\": (options?: EntryOptions) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, templateString))
+		builder.AppendLines(fmt.Sprintf("\"%s\": (options: EntryOptions) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, templateString))
 	} else {
 		templateString, err := entry.ReplacedTemplateValue(language, func(key string, format dictionary.TemplateKeyFormat) (string, error) {
 			call, callErr := t.ArgFormatter().Format(language, key, format)
@@ -75,7 +75,7 @@ func (t ReactBuilderOptions) WriteEntryData(builder *code.IndentedCodeBuilder, a
 		if err != nil {
 			return errors.Wrap(err, "failed to parse template parameter")
 		}
-		builder.AppendLines(fmt.Sprintf("\"%s\": (param: %s, options?: EntryOptions<%s>) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, argType, argType, templateString))
+		builder.AppendLines(fmt.Sprintf("\"%s\": (options: EntryOptions<%s>, param: %s) => <>{rlb(`%s`,options?.lineBreakElement)}</>,", language, argType, argType, templateString))
 	}
 	return nil
 }

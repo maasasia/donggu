@@ -9,8 +9,8 @@ export class Donggu extends _MDict_Impl {
     public lineBreakElement?: React.ReactNode;
 
     constructor(private readonly getFallbackOrder: FallbackOrderFn) {
-        super((key: keyof typeof DATA, options?: EntryOptions, language?: Language) => {
-            return this.resolve(key, options, language);
+        super((key: keyof typeof DATA, params: unknown, options?: EntryOptions, language?: Language) => {
+            return this.resolve(key, params, options, language);
         });
     }
 
@@ -18,19 +18,19 @@ export class Donggu extends _MDict_Impl {
         return Version;
     }
 
-    public resolve(key: keyof typeof DATA, options?: EntryOptions, language?: Language): string {
+    public resolve(key: keyof typeof DATA, params: unknown, options?: EntryOptions, language?: Language): string {
         if (this.lineBreakElement) {
             options = Object.assign({lineBreakElement: this.lineBreakElement}, options);
         }
         if (language && (language in DATA[key])) {
-            return (DATA[key] as any)[language](options);
+            return (DATA[key] as any)[language](options, params);
         }
         const fallbackOrder = this.getFallbackOrder(language);
         for (let i=0; i<fallbackOrder.length-1; i++) {
             if (fallbackOrder[i] in DATA[key]) {
-                return (DATA[key] as any)[fallbackOrder[i]](options);
+                return (DATA[key] as any)[fallbackOrder[i]](options, params);
             }
         }
-        return (DATA[key] as any)[fallbackOrder[fallbackOrder.length - 1]](options);
+        return (DATA[key] as any)[fallbackOrder[fallbackOrder.length - 1]](options, params);
     }
 }
