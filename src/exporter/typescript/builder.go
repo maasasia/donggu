@@ -200,6 +200,8 @@ func (t *typescriptBuilder) Build(metadata dictionary.Metadata, w io.Writer) {
 		fmt.Sprintf("export const Version = '%s';", metadata.Version),
 		fmt.Sprintf("export type RequiredLanguage = '%s';", strings.Join(metadata.RequiredLanguages, "' | '")),
 		fmt.Sprintf("export type Language = '%s';", strings.Join(metadata.SupportedLanguages, "' | '")),
+		fmt.Sprintf("export const RequiredLanguageSet = new Set(['%s']);", strings.Join(metadata.RequiredLanguages, "', '")),
+		fmt.Sprintf("export const LanguageSet = new Set(['%s']);", strings.Join(metadata.SupportedLanguages, "', '")),
 		"",
 	)
 

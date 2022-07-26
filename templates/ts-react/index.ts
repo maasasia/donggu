@@ -1,3 +1,3 @@
 export { Donggu } from "./donggu";
 export { EntryOptions } from "./types";
-export { Version, RequiredLanguage, Language } from "./generated/dictionary";
+export { Version, RequiredLanguage, Language, RequiredLanguageSet, LanguageSet } from "./generated/dictionary";
